@@ -1,0 +1,18 @@
+export type BookedAppointment = {
+  id: string;
+  userId: string;
+  patientName: string;
+  patientPhone: string;
+  doctorId: string;
+  doctorName: string;
+  specialty: string;
+  city: string;
+  photo: string;
+  date: string;
+  dateLabel: string;
+  time: string;
+  fee: number;
+  visitType: string;
+  note?: string;
+  status: "pending" | "confirmed" | "cancelled";
+};

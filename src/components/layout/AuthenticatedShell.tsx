@@ -1,3 +1,5 @@
+"use client";
+
 import type { ReactNode } from "react";
 import AppNavbar from "@/components/layout/AppNavbar";
 
@@ -9,7 +11,7 @@ export default function AuthenticatedShell({ children }: AuthenticatedShellProps
   return (
     <div className="min-h-screen bg-[var(--canvas)] text-[var(--ink)]">
       <AppNavbar />
-      {children}
+      <div className="pt-[88px]">{children}</div>
     </div>
   );
 }

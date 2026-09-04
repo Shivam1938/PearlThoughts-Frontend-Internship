@@ -1,12 +1,19 @@
+"use client";
+
 import type { Doctor } from "@/types/doctor";
+import { useState } from "react";
+import BookingDialog from "@/features/booking/components/BookingDialog";
 
 type DoctorCardProps = {
   doctor: Doctor;
 };
 
 export default function DoctorCard({ doctor }: DoctorCardProps) {
+  const [isBookingOpen, setIsBookingOpen] = useState(false);
+
   return (
-    <article className="rounded-2xl border border-[var(--line)] bg-white p-4 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
+    <>
+      <article className="rounded-2xl border border-[var(--line)] bg-white p-4 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
       <div className="flex items-start gap-4">
         <img
           src={doctor.photo}
@@ -19,12 +26,12 @@ export default function DoctorCard({ doctor }: DoctorCardProps) {
             {doctor.specialty}
           </span>
           <p className="mt-2 text-sm text-[var(--muted)]">
-            {doctor.city} · {doctor.experience} years experience
+            {doctor.city} · {doctor.age} years old · {doctor.experience} years experience
           </p>
         </div>
       </div>
 
-      <div className="mt-4 flex items-center justify-between rounded-xl bg-stone-50 px-3 py-2.5">
+      <div className="doctor-metrics mt-4 flex items-center justify-between rounded-xl px-3 py-2.5">
         <div>
           <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[var(--muted)]">Patient satisfaction</p>
           <p className="mt-1 text-sm font-semibold">{doctor.patientSatisfaction}% recommended</p>
@@ -40,10 +47,15 @@ export default function DoctorCard({ doctor }: DoctorCardProps) {
           <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[var(--muted)]">Consultation fee</p>
           <p className="mt-1 text-xl font-semibold">₹{doctor.fee}</p>
         </div>
-        <div className="rounded-lg bg-amber-50 px-2.5 py-1.5 text-sm font-semibold text-amber-700" aria-label={`${doctor.rating} out of 5 stars`}>
-          ★ {doctor.rating.toFixed(1)}
+        <div className="flex items-center gap-2">
+          <div className="rounded-lg bg-amber-50 px-2.5 py-1.5 text-sm font-semibold text-amber-700" aria-label={`${doctor.rating} out of 5 stars`}>
+            ★ {doctor.rating.toFixed(1)}
+          </div>
+          <button type="button" onClick={() => setIsBookingOpen(true)} className="rounded-lg bg-sky-600 px-3.5 py-2 font-semibold text-white hover:bg-sky-700">Book now</button>
         </div>
       </div>
-    </article>
+      </article>
+      {isBookingOpen && <BookingDialog doctor={doctor} onClose={() => setIsBookingOpen(false)} />}
+    </>
   );
 }

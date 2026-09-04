@@ -2,7 +2,8 @@
 
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { useState, type FormEvent } from "react";
+import { Eye, EyeOff } from "lucide-react";
+import { useRef, useState, type FormEvent } from "react";
 import { useLogin } from "@/features/auth/hooks/useLogin";
 import { validateLogin, type LoginFormErrors } from "@/features/auth/validation";
 
@@ -11,7 +12,21 @@ export default function LoginForm() {
   const { error: serverError, isLoading, user, submit } = useLogin();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const passwordInputRef = useRef<HTMLInputElement>(null);
   const [errors, setErrors] = useState<LoginFormErrors>({});
+
+  function togglePasswordVisibility(): void {
+    const input = passwordInputRef.current;
+    const selectionStart = input?.selectionStart ?? password.length;
+    const selectionEnd = input?.selectionEnd ?? password.length;
+    setShowPassword((visible) => !visible);
+    requestAnimationFrame(() => {
+      const nextInput = passwordInputRef.current;
+      nextInput?.focus({ preventScroll: true });
+      nextInput?.setSelectionRange(selectionStart, selectionEnd);
+    });
+  }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -33,7 +48,7 @@ export default function LoginForm() {
   }
 
   return (
-    <form className="w-full max-w-md rounded-xl border border-[var(--line)] bg-white p-6 shadow-sm" onSubmit={handleSubmit} noValidate>
+    <form className="auth-form-card w-full max-w-md rounded-xl border border-[var(--line)] bg-white p-6 shadow-sm" onSubmit={handleSubmit} noValidate>
       <div>
         <p className="text-sm font-medium uppercase tracking-[0.18em] text-[var(--brand)]">Welcome back</p>
         <h1 className="mt-3 text-3xl font-semibold tracking-tight">Log in to your account</h1>
@@ -47,7 +62,12 @@ export default function LoginForm() {
         </div>
         <div>
           <label className="text-sm font-medium" htmlFor="password">Password</label>
-          <input className="mt-1.5 w-full rounded-lg border border-[var(--line)] bg-[var(--canvas)] px-3 py-2.5 outline-none transition focus:border-[var(--brand)] focus:bg-white focus:ring-4 focus:ring-emerald-100" id="password" name="password" type="password" autoComplete="current-password" value={password} onChange={(event) => setPassword(event.target.value)} aria-describedby={errors.password ? "password-error" : undefined} aria-invalid={Boolean(errors.password)} />
+          <div className="relative mt-1.5">
+            <input ref={passwordInputRef} className="auth-password-input w-full rounded-lg border border-[var(--line)] bg-[var(--canvas)] px-3 py-2.5 pr-11 outline-none transition focus:border-[var(--brand)] focus:bg-white focus:ring-4 focus:ring-emerald-100" id="password" name="password" type={showPassword ? "text" : "password"} autoComplete="current-password" value={password} onChange={(event) => setPassword(event.target.value)} aria-describedby={errors.password ? "password-error" : undefined} aria-invalid={Boolean(errors.password)} />
+            <button type="button" onClick={togglePasswordVisibility} className="absolute inset-y-0 right-0 grid w-11 place-items-center rounded-r-lg text-[var(--muted)] hover:bg-black/5 hover:text-[var(--ink)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[var(--brand)]" aria-label={showPassword ? "Hide password" : "Show password"} title={showPassword ? "Hide password" : "Show password"}>
+              {showPassword ? <Eye className="size-4" aria-hidden="true" /> : <EyeOff className="size-4" aria-hidden="true" />}
+            </button>
+          </div>
           {errors.password && <p className="mt-1 text-sm text-red-700" id="password-error">{errors.password}</p>}
         </div>
       </div>
