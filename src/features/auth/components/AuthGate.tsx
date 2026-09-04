@@ -2,9 +2,9 @@
 
 import { usePathname } from "next/navigation";
 import type { ReactNode } from "react";
+import AuthenticatedShell from "@/components/layout/AuthenticatedShell";
 import AuthShell from "@/features/auth/components/AuthShell";
 import LoginForm from "@/features/auth/components/LoginForm";
-import LogoutButton from "@/features/auth/components/LogoutButton";
 import { useAuth } from "@/features/auth/hooks/auth-context";
 
 export default function AuthGate({ children }: { children: ReactNode }) {
@@ -20,12 +20,7 @@ export default function AuthGate({ children }: { children: ReactNode }) {
   }
 
   if (pathname !== "/login" && user) {
-    return (
-      <>
-        <LogoutButton />
-        {children}
-      </>
-    );
+    return <AuthenticatedShell>{children}</AuthenticatedShell>;
   }
 
   return children;
