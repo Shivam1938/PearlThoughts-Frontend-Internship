@@ -17,11 +17,12 @@ export default function AuthGate({ children }: { children: ReactNode }) {
 
   if (!isReady || !isDoctorReady) return null;
 
-  const isDoctorRoute = pathname.startsWith("/doctor");
+  // `/doctors` is a patient route; only the singular `/doctor` segment is protected here.
+  const isDoctorRoute = pathname === "/doctor" || pathname.startsWith("/doctor/");
   const isPublicDoctorRoute = pathname === "/doctor/login" || pathname === "/doctor/register";
   if (isDoctorRoute) {
     if (isPublicDoctorRoute) return children;
-    if (!isPublicDoctorRoute && !doctor) return <AuthShell><DoctorLoginForm /></AuthShell>;
+    if (!doctor) return <AuthShell><DoctorLoginForm /></AuthShell>;
     return <DoctorPortalShell>{children}</DoctorPortalShell>;
   }
 
