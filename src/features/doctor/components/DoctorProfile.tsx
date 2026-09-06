@@ -5,6 +5,7 @@ import { CalendarPlus, Clock3, Trash2 } from "lucide-react";
 import { useMemo, useState, type FormEvent } from "react";
 import { loadDoctorAvailability, removeDoctorAvailabilitySlot, saveDoctorAvailability } from "@/features/doctor/availability";
 import { updateDoctorProfile } from "@/features/doctor/api/profile";
+import { saveDirectoryDoctor } from "@/features/doctor/directory";
 import { useDoctorAuth } from "@/features/doctor/hooks/doctor-auth-context";
 import type { DoctorAvailabilitySlot, DoctorProfileFields } from "@/features/doctor/types";
 
@@ -26,7 +27,7 @@ export default function DoctorProfile() {
   const doctorId = doctor.id;
 
   function updateProfileField(field: keyof DoctorProfileFields, value: string): void { setProfile((current) => current ? { ...current, [field]: field === "experienceYears" ? Number(value) : value } : current); }
-  async function saveProfile(event: FormEvent<HTMLFormElement>): Promise<void> { event.preventDefault(); if (!profile) return; setProfileError(""); setIsSavingProfile(true); try { const savedProfile = await updateDoctorProfile(doctorId, profile); updateDoctor(savedProfile); setProfile(savedProfile); setMessage("Profile saved."); } catch (error: unknown) { setProfileError(error instanceof Error ? error.message : "Unable to save your profile"); } finally { setIsSavingProfile(false); } }
+  async function saveProfile(event: FormEvent<HTMLFormElement>): Promise<void> { event.preventDefault(); if (!profile) return; setProfileError(""); setIsSavingProfile(true); try { const savedProfile = await updateDoctorProfile(doctorId, profile); saveDirectoryDoctor(savedProfile); updateDoctor(savedProfile); setProfile(savedProfile); setMessage("Profile saved."); } catch (error: unknown) { setProfileError(error instanceof Error ? error.message : "Unable to save your profile"); } finally { setIsSavingProfile(false); } }
   function toggleDay(day: number): void { setSlotForm((current) => ({ ...current, daysOfWeek: current.daysOfWeek.includes(day) ? current.daysOfWeek.filter((item) => item !== day) : [...current.daysOfWeek, day] })); }
   function addSlots(event: FormEvent<HTMLFormElement>): void {
     event.preventDefault(); setSlotError("");

@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { CalendarDays } from "lucide-react";
 import { getSlots } from "@/features/booking/api/getSlots";
 import { saveBookedAppointment } from "@/features/booking/storage";
+import { markDoctorAvailabilitySlotBooked } from "@/features/doctor/availability";
 import { useAuth } from "@/features/auth/hooks/auth-context";
 import type { Doctor } from "@/types/doctor";
 import type { Slot } from "@/types/slot";
@@ -14,7 +15,6 @@ type BookingDialogProps = {
 };
 
 type BookingStep = "slot" | "review" | "confirmed";
-const bookingStartDate = "2026-09-04";
 const visitTypes = ["Follow-up consultation", "Annual wellness visit", "New symptoms", "Prescription review", "Specialist consultation"];
 
 export default function BookingDialog({ doctor, onClose }: BookingDialogProps) {
@@ -38,7 +38,7 @@ export default function BookingDialog({ doctor, onClose }: BookingDialogProps) {
         if (!isActive) return;
         setError(null);
         setSlots(nextSlots);
-        setSelectedDate(bookingStartDate);
+        setSelectedDate(nextSlots[0]?.date ?? "");
         setIsLoading(false);
       })
       .catch((nextError: unknown) => {
@@ -52,25 +52,7 @@ export default function BookingDialog({ doctor, onClose }: BookingDialogProps) {
     };
   }, [doctor.id]);
 
-  const dates = useMemo(() => {
-    return Array.from({ length: 7 }, (_, index) => {
-      const date = new Date(`${bookingStartDate}T00:00:00`);
-      date.setDate(date.getDate() + index);
-      const value = date.toISOString().slice(0, 10);
-      const daySlots = slots.filter((slot) => slot.date === value);
-
-      return {
-        date: value,
-        dateLabel:
-          index === 0
-            ? "Today"
-            : index === 1
-              ? "Tomorrow"
-              : date.toLocaleDateString("en-IN", { weekday: "short", month: "short", day: "numeric" }),
-        slotCount: daySlots.length,
-      };
-    });
-  }, [slots]);
+  const dates = useMemo(() => Array.from(new Set(slots.map((slot) => slot.date))).sort().map((date) => ({ date, dateLabel: date === new Date().toISOString().slice(0, 10) ? "Today" : date, slotCount: slots.filter((slot) => slot.date === date).length })), [slots]);
   const visibleSlots = slots.filter((slot) => slot.date === selectedDate);
   const firstDate = dates[0]?.date;
   const lastDate = dates[dates.length - 1]?.date;
@@ -88,12 +70,21 @@ export default function BookingDialog({ doctor, onClose }: BookingDialogProps) {
     const trimmedPatientPhone = patientPhone.trim();
     if (!user?.id || !selectedSlot || !trimmedPatientName || !trimmedPatientPhone) return;
 
+    const appointmentId = `booking-${Date.now()}`;
+    if (selectedSlot.id.startsWith("availability-") && !markDoctorAvailabilitySlotBooked(doctor.id, selectedSlot.id, appointmentId)) {
+      setError("That slot was just booked. Please choose another time.");
+      setStep("slot");
+      setSelectedSlot(null);
+      setSlots((current) => current.filter((slot) => slot.id !== selectedSlot.id));
+      return;
+    }
     saveBookedAppointment({
-      id: `booking-${Date.now()}`,
+      id: appointmentId,
       userId: user.id,
       patientName: trimmedPatientName,
       patientPhone: trimmedPatientPhone,
       doctorId: doctor.id,
+      slotId: selectedSlot.id,
       doctorName: doctor.name,
       specialty: doctor.specialty,
       city: doctor.city,

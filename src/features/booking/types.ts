@@ -4,6 +4,7 @@ export type BookedAppointment = {
   patientName: string;
   patientPhone: string;
   doctorId: string;
+  slotId?: string;
   doctorName: string;
   specialty: string;
   city: string;

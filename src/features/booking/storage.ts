@@ -53,6 +53,7 @@ function isBookedAppointment(value: unknown): value is BookedAppointment {
     typeof appointment.patientName === "string" &&
     typeof appointment.patientPhone === "string" &&
     typeof appointment.doctorId === "string" &&
+    (typeof appointment.slotId === "undefined" || typeof appointment.slotId === "string") &&
     typeof appointment.doctorName === "string" &&
     typeof appointment.specialty === "string" &&
     typeof appointment.city === "string" &&

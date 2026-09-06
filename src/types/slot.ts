@@ -4,4 +4,5 @@ export type Slot = {
   date: string;
   dateLabel: string;
   time: string;
+  endTime?: string;
 };

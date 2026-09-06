@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { registerDoctor } from "@/features/doctor/api/register";
+import { saveDirectoryDoctor } from "@/features/doctor/directory";
 import type { DoctorRegistrationRequest } from "@/features/doctor/types";
 
 export function useDoctorRegistration() {
@@ -13,7 +14,8 @@ export function useDoctorRegistration() {
     setError(null);
 
     try {
-      await registerDoctor(request);
+      const response = await registerDoctor(request);
+      saveDirectoryDoctor(response.doctor);
       return true;
     } catch (caughtError) {
       setError(caughtError instanceof Error ? caughtError.message : "Unable to create your doctor account");
