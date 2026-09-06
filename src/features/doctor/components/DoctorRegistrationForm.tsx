@@ -1,133 +1,48 @@
 "use client";
 
+import { Eye, EyeOff } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState, type FormEvent } from "react";
+import { useRef, useState, type FormEvent } from "react";
 import { useDoctorRegistration } from "@/features/doctor/hooks/useDoctorRegistration";
 import type { DoctorRegistrationFormErrors } from "@/features/doctor/types";
 import { validateDoctorRegistration } from "@/features/doctor/validation";
 
-const initialValues = {
-  name: "",
-  email: "",
-  password: "",
-  confirmPassword: "",
-  specialization: "",
-  qualification: "",
-  experienceYears: "",
-  phone: "",
-  clinicAddress: "",
-  bio: "",
-  profileImage: "",
-};
+const specializations = ["General Medicine", "Cardiology", "Dermatology", "Pediatrics", "Orthopedics", "Gynecology", "Neurology", "Psychiatry", "ENT", "Dentistry", "Ophthalmology", "Endocrinology", "Gastroenterology", "Pulmonology", "Urology"];
+const initialValues = { name: "", email: "", password: "", confirmPassword: "", specialization: "", qualification: "", experienceYears: "", phone: "", clinicAddress: "", bio: "" };
+type RegistrationField = keyof typeof initialValues;
 
 export default function DoctorRegistrationForm() {
   const router = useRouter();
   const { error: serverError, isLoading, submit } = useDoctorRegistration();
   const [values, setValues] = useState(initialValues);
   const [errors, setErrors] = useState<DoctorRegistrationFormErrors>({});
-
-  function updateField(field: keyof typeof initialValues, value: string): void {
-    setValues((current) => ({ ...current, [field]: value }));
-  }
+  const updateField = (field: RegistrationField, value: string) => setValues((current) => ({ ...current, [field]: value }));
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const validationErrors = validateDoctorRegistration(values);
     setErrors(validationErrors);
     if (Object.keys(validationErrors).length > 0) return;
-
-    const isRegistered = await submit({
-      name: values.name.trim(),
-      email: values.email.trim(),
-      password: values.password,
-      specialization: values.specialization.trim(),
-      qualification: values.qualification.trim(),
-      experienceYears: Number(values.experienceYears),
-      phone: values.phone.trim(),
-      clinicAddress: values.clinicAddress.trim(),
-      bio: values.bio.trim(),
-      profileImage: values.profileImage.trim(),
-    });
+    const isRegistered = await submit({ name: values.name.trim(), email: values.email.trim(), password: values.password, specialization: values.specialization, qualification: values.qualification.trim(), experienceYears: Number(values.experienceYears), phone: values.phone.trim(), clinicAddress: values.clinicAddress.trim(), bio: values.bio.trim() });
     if (isRegistered) router.push("/doctor/login");
   }
 
   return (
-    <form className="auth-form-card w-full max-w-2xl rounded-xl border border-[var(--line)] bg-white p-5 shadow-sm sm:p-6" onSubmit={handleSubmit} noValidate>
-      <div>
-        <p className="text-sm font-medium uppercase tracking-[0.18em] text-[var(--brand)]">Doctor portal</p>
-        <h1 className="mt-3 text-3xl font-semibold tracking-tight">Create your doctor account</h1>
-        <p className="mt-2 text-[var(--muted)]">Share the details patients need to find and trust your practice.</p>
-      </div>
-
-      <fieldset className="mt-6">
-        <legend className="text-sm font-semibold">Personal & account details</legend>
-        <div className="mt-3 grid gap-3 sm:grid-cols-2">
-          <Field label="Full name" name="name" value={values.name} error={errors.name} onChange={updateField} autoComplete="name" />
-          <Field label="Email" name="email" type="email" value={values.email} error={errors.email} onChange={updateField} autoComplete="email" />
-          <Field label="Password" name="password" type="password" value={values.password} error={errors.password} onChange={updateField} autoComplete="new-password" />
-          <Field label="Confirm password" name="confirmPassword" type="password" value={values.confirmPassword} error={errors.confirmPassword} onChange={updateField} autoComplete="new-password" />
-        </div>
-      </fieldset>
-
-      <fieldset className="mt-6">
-        <legend className="text-sm font-semibold">Professional details</legend>
-        <div className="mt-3 grid gap-3 sm:grid-cols-2">
-          <Field label="Specialization" name="specialization" value={values.specialization} error={errors.specialization} onChange={updateField} />
-          <Field label="Qualification" name="qualification" value={values.qualification} error={errors.qualification} onChange={updateField} />
-          <Field label="Years of experience" name="experienceYears" type="number" value={values.experienceYears} error={errors.experienceYears} onChange={updateField} inputMode="numeric" />
-          <Field label="Profile image URL" name="profileImage" type="url" value={values.profileImage} error={errors.profileImage} onChange={updateField} />
-        </div>
-        <div className="mt-3">
-          <Field label="Professional bio" name="bio" value={values.bio} error={errors.bio} onChange={updateField} multiline />
-        </div>
-      </fieldset>
-
-      <fieldset className="mt-6">
-        <legend className="text-sm font-semibold">Contact details</legend>
-        <div className="mt-3 grid gap-3 sm:grid-cols-2">
-          <Field label="Phone number" name="phone" type="tel" value={values.phone} error={errors.phone} onChange={updateField} autoComplete="tel" />
-          <Field label="Clinic address" name="clinicAddress" value={values.clinicAddress} error={errors.clinicAddress} onChange={updateField} autoComplete="street-address" />
-        </div>
-      </fieldset>
-
-      {serverError && <p className="mt-4 text-sm text-red-700" role="alert">{serverError}</p>}
-      <button className="mt-6 w-full rounded-lg bg-[var(--brand)] px-4 py-3 font-semibold text-white hover:bg-[var(--brand-deep)] disabled:cursor-not-allowed disabled:opacity-60" type="submit" disabled={isLoading}>
-        {isLoading ? "Creating doctor account..." : "Create doctor account"}
-      </button>
-      <p className="mt-4 text-center text-sm text-[var(--muted)]">
-        Already registered? <Link className="font-semibold text-[var(--brand)] hover:underline" href="/doctor/login">Log in to the Doctor Portal</Link>
-      </p>
+    <form className="auth-form-card max-h-full w-full max-w-none overflow-y-auto rounded-xl border border-[var(--line)] bg-white p-5 shadow-sm sm:p-6" onSubmit={handleSubmit} noValidate>
+      <header className="border-b border-[var(--line)] pb-5"><p className="text-sm font-medium uppercase tracking-[0.18em] text-[var(--brand)]">Doctor portal</p><h1 className="mt-2 text-3xl font-semibold tracking-tight">Create your doctor account</h1><p className="mt-2 max-w-xl text-sm leading-6 text-[var(--muted)]">Set up your practice profile so patients can find the care they need.</p></header>
+      <Section title="Personal & account details" description="Use an email address you&apos;ll use to access the Doctor Portal."><div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4"><Field label="Full name" name="name" value={values.name} error={errors.name} onChange={updateField} autoComplete="name" /><Field label="Email" name="email" type="email" value={values.email} error={errors.email} onChange={updateField} autoComplete="email" /><PasswordField label="Password" name="password" value={values.password} error={errors.password} onChange={updateField} /><PasswordField label="Confirm password" name="confirmPassword" value={values.confirmPassword} error={errors.confirmPassword} onChange={updateField} /></div></Section>
+      <Section title="Professional details" description="These details help patients understand your expertise."><div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3"><SpecializationField value={values.specialization} error={errors.specialization} onChange={updateField} /><Field label="Qualification" name="qualification" value={values.qualification} error={errors.qualification} onChange={updateField} placeholder="e.g. MBBS, MD" /><Field label="Years of experience" name="experienceYears" type="number" value={values.experienceYears} error={errors.experienceYears} onChange={updateField} inputMode="numeric" min={0} max={70} /></div><div className="mt-4"><Field label="Professional bio" name="bio" value={values.bio} error={errors.bio} onChange={updateField} multiline placeholder="Briefly describe your clinical experience and approach to care." /></div></Section>
+      <Section title="Contact details" description="Add the best details for clinic communications."><div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-[0.8fr_1.2fr]"><Field label="Phone number" name="phone" type="tel" value={values.phone} error={errors.phone} onChange={updateField} autoComplete="tel" /><Field label="Clinic address" name="clinicAddress" value={values.clinicAddress} error={errors.clinicAddress} onChange={updateField} autoComplete="street-address" /></div></Section>
+      {serverError && <p className="mt-5 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700" role="alert">{serverError}</p>}
+      <button className="mt-6 w-full rounded-lg bg-[var(--brand)] px-4 py-3 font-semibold text-white shadow-sm transition hover:bg-[var(--brand-deep)] hover:shadow-md disabled:cursor-not-allowed disabled:opacity-60" type="submit" disabled={isLoading}>{isLoading ? "Creating doctor account..." : "Create doctor account"}</button>
+      <p className="mt-4 text-center text-sm text-[var(--muted)]">Already registered? <Link className="font-semibold text-[var(--brand)] hover:underline" href="/doctor/login">Log in to the Doctor Portal</Link></p>
     </form>
   );
 }
 
-type FieldProps = {
-  label: string;
-  name: keyof typeof initialValues;
-  value: string;
-  error?: string;
-  onChange: (field: keyof typeof initialValues, value: string) => void;
-  type?: "email" | "number" | "password" | "tel" | "text" | "url";
-  autoComplete?: string;
-  inputMode?: "numeric";
-  multiline?: boolean;
-};
-
-function Field({ label, name, value, error, onChange, type = "text", autoComplete, inputMode, multiline }: FieldProps) {
-  const id = `doctor-${name}`;
-  const errorId = `${id}-error`;
-  const className = "mt-1.5 w-full rounded-lg border border-[var(--line)] bg-[var(--canvas)] px-3 py-2.5 outline-none transition focus:border-[var(--brand)] focus:bg-white focus:ring-4 focus:ring-emerald-100";
-
-  return (
-    <div>
-      <label className="text-sm font-medium" htmlFor={id}>{label}</label>
-      {multiline ? (
-        <textarea className={`${className} min-h-24 resize-y`} id={id} name={name} value={value} onChange={(event) => onChange(name, event.target.value)} aria-describedby={error ? errorId : undefined} aria-invalid={Boolean(error)} />
-      ) : (
-        <input className={className} id={id} name={name} type={type} value={value} onChange={(event) => onChange(name, event.target.value)} autoComplete={autoComplete} inputMode={inputMode} aria-describedby={error ? errorId : undefined} aria-invalid={Boolean(error)} />
-      )}
-      {error && <p className="mt-1 text-sm text-red-700" id={errorId}>{error}</p>}
-    </div>
-  );
-}
+function Section({ title, description, children }: { title: string; description: string; children: React.ReactNode }) { return <fieldset className="mt-7 border-t border-[var(--line)] pt-6 first:mt-6 first:border-t-0 first:pt-0"><legend className="text-base font-semibold">{title}</legend><p className="mt-1 text-sm text-[var(--muted)]">{description}</p><div className="mt-4">{children}</div></fieldset>; }
+type FieldProps = { label: string; name: Exclude<RegistrationField, "password" | "confirmPassword" | "specialization">; value: string; error?: string; onChange: (field: RegistrationField, value: string) => void; type?: "email" | "number" | "tel" | "text"; autoComplete?: string; inputMode?: "numeric"; multiline?: boolean; placeholder?: string; min?: number; max?: number };
+function Field({ label, name, value, error, onChange, type = "text", autoComplete, inputMode, multiline, placeholder, min, max }: FieldProps) { const id = `doctor-${name}`; const errorId = `${id}-error`; const className = "mt-1.5 w-full rounded-lg border border-[var(--line)] bg-[var(--canvas)] px-3 py-2.5 text-sm outline-none transition placeholder:text-stone-400 focus:border-[var(--brand)] focus:bg-white focus:ring-4 focus:ring-emerald-100"; return <div><label className="text-sm font-medium" htmlFor={id}>{label}</label>{multiline ? <textarea className={`${className} min-h-24 resize-y`} id={id} name={name} value={value} placeholder={placeholder} onChange={(event) => onChange(name, event.target.value)} aria-describedby={error ? errorId : undefined} aria-invalid={Boolean(error)} /> : <input className={className} id={id} name={name} type={type} value={value} placeholder={placeholder} min={min} max={max} onChange={(event) => onChange(name, event.target.value)} autoComplete={autoComplete} inputMode={inputMode} aria-describedby={error ? errorId : undefined} aria-invalid={Boolean(error)} />}{error && <p className="mt-1 text-sm text-red-700" id={errorId}>{error}</p>}</div>; }
+function PasswordField({ label, name, value, error, onChange }: { label: string; name: "password" | "confirmPassword"; value: string; error?: string; onChange: (field: RegistrationField, value: string) => void }) { const inputRef = useRef<HTMLInputElement>(null); const [isVisible, setIsVisible] = useState(false); const id = `doctor-${name}`; const errorId = `${id}-error`; function toggleVisibility(): void { const start = inputRef.current?.selectionStart ?? value.length; const end = inputRef.current?.selectionEnd ?? value.length; setIsVisible((visible) => !visible); requestAnimationFrame(() => { inputRef.current?.focus({ preventScroll: true }); inputRef.current?.setSelectionRange(start, end); }); } return <div><label className="text-sm font-medium" htmlFor={id}>{label}</label><div className="relative mt-1.5"><input ref={inputRef} className="auth-password-input w-full rounded-lg border border-[var(--line)] bg-[var(--canvas)] px-3 py-2.5 pr-11 text-sm outline-none transition focus:border-[var(--brand)] focus:bg-white focus:ring-4 focus:ring-emerald-100" id={id} name={name} type={isVisible ? "text" : "password"} value={value} autoComplete="new-password" onChange={(event) => onChange(name, event.target.value)} aria-describedby={error ? errorId : undefined} aria-invalid={Boolean(error)} /><button className="absolute inset-y-0 right-0 grid w-11 place-items-center rounded-r-lg text-[var(--muted)] hover:bg-black/5 hover:text-[var(--ink)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[var(--brand)]" type="button" onClick={toggleVisibility} aria-label={isVisible ? "Hide password" : "Show password"} title={isVisible ? "Hide password" : "Show password"}>{isVisible ? <Eye className="size-4" aria-hidden="true" /> : <EyeOff className="size-4" aria-hidden="true" />}</button></div>{error && <p className="mt-1 text-sm text-red-700" id={errorId}>{error}</p>}</div>; }
+function SpecializationField({ value, error, onChange }: { value: string; error?: string; onChange: (field: RegistrationField, value: string) => void }) { const id = "doctor-specialization"; const errorId = `${id}-error`; return <div><label className="text-sm font-medium" htmlFor={id}>Specialization</label><select className="mt-1.5 w-full rounded-lg border border-[var(--line)] bg-[var(--canvas)] px-3 py-2.5 text-sm outline-none transition focus:border-[var(--brand)] focus:bg-white focus:ring-4 focus:ring-emerald-100" id={id} name="specialization" value={value} onChange={(event) => onChange("specialization", event.target.value)} aria-describedby={error ? errorId : undefined} aria-invalid={Boolean(error)}><option value="" disabled>Select your specialization</option>{specializations.map((specialization) => <option key={specialization} value={specialization}>{specialization}</option>)}</select>{error && <p className="mt-1 text-sm text-red-700" id={errorId}>{error}</p>}</div>; }

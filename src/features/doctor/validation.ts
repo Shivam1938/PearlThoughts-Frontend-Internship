@@ -11,7 +11,6 @@ type DoctorRegistrationFields = {
   phone: string;
   clinicAddress: string;
   bio: string;
-  profileImage: string;
 };
 
 export function validateDoctorRegistration(fields: DoctorRegistrationFields): DoctorRegistrationFormErrors {
@@ -35,20 +34,9 @@ export function validateDoctorRegistration(fields: DoctorRegistrationFields): Do
   else if (!/^[0-9+()\-\s]{7,20}$/.test(fields.phone)) errors.phone = "Enter a valid phone number";
   if (fields.clinicAddress.trim().length < 8) errors.clinicAddress = "Enter your clinic address";
   if (fields.bio.trim().length < 20) errors.bio = "Tell patients about your experience (at least 20 characters)";
-  if (!isHttpUrl(fields.profileImage)) errors.profileImage = "Enter a valid image URL";
-
   return errors;
 }
 
 function isValidEmail(email: string): boolean {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-}
-
-function isHttpUrl(value: string): boolean {
-  try {
-    const url = new URL(value);
-    return url.protocol === "http:" || url.protocol === "https:";
-  } catch {
-    return false;
-  }
 }

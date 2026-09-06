@@ -14,8 +14,7 @@ function isRegistrationBody(value: unknown): value is DoctorRegistrationRequest 
     typeof body.experienceYears === "number" &&
     typeof body.phone === "string" &&
     typeof body.clinicAddress === "string" &&
-    typeof body.bio === "string" &&
-    typeof body.profileImage === "string"
+    typeof body.bio === "string"
   );
 }
 
@@ -48,7 +47,7 @@ export async function POST(request: Request) {
     phone: body.phone.trim(),
     clinicAddress: body.clinicAddress.trim(),
     bio: body.bio.trim(),
-    profileImage: body.profileImage.trim(),
+    profileImage: "",
   };
   doctorAccounts.push(doctor);
 

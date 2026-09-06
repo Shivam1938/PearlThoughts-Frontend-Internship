@@ -2,5 +2,5 @@ import AuthShell from "@/features/auth/components/AuthShell";
 import DoctorRegistrationForm from "@/features/doctor/components/DoctorRegistrationForm";
 
 export default function DoctorRegistrationPage() {
-  return <AuthShell><DoctorRegistrationForm /></AuthShell>;
+  return <AuthShell layout="wide"><DoctorRegistrationForm /></AuthShell>;
 }

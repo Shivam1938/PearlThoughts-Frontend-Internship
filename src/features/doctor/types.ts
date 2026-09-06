@@ -12,7 +12,7 @@ export type DoctorAccount = {
   profileImage: string;
 };
 
-export type DoctorRegistrationRequest = Omit<DoctorAccount, "id">;
+export type DoctorRegistrationRequest = Omit<DoctorAccount, "id" | "profileImage">;
 
 export type DoctorRegistrationResponse = {
   doctor: Omit<DoctorAccount, "password">;
