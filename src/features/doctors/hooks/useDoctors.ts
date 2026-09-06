@@ -23,7 +23,10 @@ export function useDoctors(): DoctorsState {
 
     getDoctors()
       .then((doctors) => {
-        if (isActive) setState({ doctors: [...doctors, ...loadDirectoryDoctors()], isLoading: false, error: null });
+        if (isActive) {
+          const allDoctors = [...doctors, ...loadDirectoryDoctors()];
+          setState({ doctors: allDoctors.filter((doctor, index) => allDoctors.findIndex((item) => item.id === doctor.id) === index), isLoading: false, error: null });
+        }
       })
       .catch((error: unknown) => {
         if (!isActive) return;
