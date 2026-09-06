@@ -1,13 +1,14 @@
 "use client";
 
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
-import { clearDoctorSession, loadDoctorSession, type DoctorSession } from "@/features/doctor/session";
+import { clearDoctorSession, loadDoctorSession, saveDoctorSession, type DoctorSession } from "@/features/doctor/session";
 import type { DoctorUser } from "@/features/doctor/types";
 
 type DoctorAuthContextValue = {
   doctor: DoctorUser | null;
   isReady: boolean;
   setSession: (session: DoctorSession) => void;
+  updateDoctor: (doctor: DoctorUser) => void;
   logout: () => void;
 };
 
@@ -30,12 +31,18 @@ export function DoctorAuthProvider({ children }: { children: ReactNode }) {
     setDoctor(session.doctor);
   }
 
+  function updateDoctor(nextDoctor: DoctorUser): void {
+    const session = loadDoctorSession();
+    if (session) saveDoctorSession({ ...session, doctor: nextDoctor });
+    setDoctor(nextDoctor);
+  }
+
   function logout(): void {
     clearDoctorSession();
     setDoctor(null);
   }
 
-  return <DoctorAuthContext.Provider value={{ doctor, isReady, setSession, logout }}>{children}</DoctorAuthContext.Provider>;
+  return <DoctorAuthContext.Provider value={{ doctor, isReady, setSession, updateDoctor, logout }}>{children}</DoctorAuthContext.Provider>;
 }
 
 export function useDoctorAuth(): DoctorAuthContextValue {

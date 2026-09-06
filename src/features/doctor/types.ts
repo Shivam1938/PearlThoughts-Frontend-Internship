@@ -31,3 +31,17 @@ export type DoctorLoginResponse = {
 };
 
 export type DoctorRegistrationFormErrors = Partial<Record<keyof DoctorRegistrationRequest | "confirmPassword", string>>;
+
+export type DoctorProfileFields = Pick<DoctorUser, "name" | "email" | "specialization" | "qualification" | "experienceYears" | "phone" | "clinicAddress" | "bio" | "profileImage">;
+
+export type DoctorAvailabilitySlot = {
+  id: string;
+  doctorId: string;
+  date: string;
+  startTime: string;
+  endTime: string;
+  isRecurring: boolean;
+  recurrenceRule?: { frequency: "weekly"; daysOfWeek: number[]; endDate: string };
+  status: "available" | "booked";
+  appointmentId?: string;
+};
