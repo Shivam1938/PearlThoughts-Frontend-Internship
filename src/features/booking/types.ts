@@ -16,5 +16,4 @@ export type BookedAppointment = {
   visitType: string;
   note?: string;
   status: "pending" | "confirmed" | "cancelled";
-  doctorDeleted?: boolean;
 };

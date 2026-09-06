@@ -20,7 +20,7 @@ export function loadBookedAppointments(userId: string): BookedAppointment[] {
 export function loadDoctorAppointments(doctorId: string): BookedAppointment[] {
   const stored = window.localStorage.getItem(BOOKINGS_KEY);
   if (!stored) return [];
-  return parseAppointments(stored).filter((appointment) => appointment.doctorId === doctorId && !appointment.doctorDeleted);
+  return parseAppointments(stored).filter((appointment) => appointment.doctorId === doctorId);
 }
 
 export function saveBookedAppointment(appointment: BookedAppointment): void {
@@ -49,10 +49,9 @@ export function updateDoctorAppointmentStatus(doctorId: string, id: string, stat
 
 export function hideDoctorAppointment(doctorId: string, id: string): boolean {
   const appointments = parseAppointments(window.localStorage.getItem(BOOKINGS_KEY) ?? "");
-  const appointment = appointments.find((item) => item.id === id && item.doctorId === doctorId && item.status !== "pending");
-  if (!appointment) return false;
-  appointment.doctorDeleted = true;
-  writeAppointments(appointments);
+  const exists = appointments.some((item) => item.id === id && item.doctorId === doctorId && item.status !== "pending");
+  if (!exists) return false;
+  writeAppointments(appointments.filter((item) => item.id !== id));
   return true;
 }
 
@@ -97,7 +96,6 @@ function isBookedAppointment(value: unknown): value is BookedAppointment {
     typeof appointment.fee === "number" &&
     typeof appointment.visitType === "string" &&
     (typeof appointment.note === "undefined" || typeof appointment.note === "string") &&
-    (typeof appointment.doctorDeleted === "undefined" || typeof appointment.doctorDeleted === "boolean") &&
     (appointment.status === "pending" || appointment.status === "confirmed" || appointment.status === "cancelled")
   );
 }
