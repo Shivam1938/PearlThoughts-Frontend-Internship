@@ -2,6 +2,7 @@
 import { Geist, Geist_Mono } from "next/font/google";
 import AuthGate from "@/features/auth/components/AuthGate";
 import { AuthProvider } from "@/features/auth/hooks/auth-context";
+import { DoctorAuthProvider } from "@/features/doctor/hooks/doctor-auth-context";
 import { ThemeProvider } from "@/components/theme/ThemeProvider";
 import "./globals.css";
 
@@ -29,7 +30,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       <body className="min-h-full flex flex-col">
         <ThemeProvider>
           <AuthProvider>
-            <AuthGate>{children}</AuthGate>
+            <DoctorAuthProvider><AuthGate>{children}</AuthGate></DoctorAuthProvider>
           </AuthProvider>
         </ThemeProvider>
       </body>

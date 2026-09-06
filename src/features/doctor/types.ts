@@ -18,4 +18,16 @@ export type DoctorRegistrationResponse = {
   doctor: Omit<DoctorAccount, "password">;
 };
 
+export type DoctorUser = Omit<DoctorAccount, "password">;
+
+export type DoctorLoginRequest = {
+  email: string;
+  password: string;
+};
+
+export type DoctorLoginResponse = {
+  doctor: DoctorUser;
+  token: string;
+};
+
 export type DoctorRegistrationFormErrors = Partial<Record<keyof DoctorRegistrationRequest | "confirmPassword", string>>;

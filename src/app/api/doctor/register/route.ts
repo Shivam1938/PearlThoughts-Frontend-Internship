@@ -52,6 +52,20 @@ export async function POST(request: Request) {
   };
   doctorAccounts.push(doctor);
 
-  const { password: _password, ...registeredDoctor } = doctor;
-  return Response.json({ doctor: registeredDoctor }, { status: 201 });
+  return Response.json({ doctor: toDoctorUser(doctor) }, { status: 201 });
+}
+
+function toDoctorUser(doctor: (typeof doctorAccounts)[number]) {
+  return {
+    id: doctor.id,
+    name: doctor.name,
+    email: doctor.email,
+    specialization: doctor.specialization,
+    qualification: doctor.qualification,
+    experienceYears: doctor.experienceYears,
+    phone: doctor.phone,
+    clinicAddress: doctor.clinicAddress,
+    bio: doctor.bio,
+    profileImage: doctor.profileImage,
+  };
 }

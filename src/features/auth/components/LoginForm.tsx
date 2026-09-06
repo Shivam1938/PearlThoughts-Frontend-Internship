@@ -43,6 +43,7 @@ export default function LoginForm() {
         <p className="text-sm font-medium text-[var(--brand)]">Login successful</p>
         <h1 className="mt-2 text-2xl font-semibold tracking-tight">Welcome, {user.name}</h1>
         <p className="mt-2 text-[var(--muted)]">You are signed in as {user.email}.</p>
+        <p className="mt-5 text-sm text-[var(--muted)]">Are you a doctor? <Link className="font-semibold text-[var(--brand)] hover:underline" href="/doctor/login">Log in to the Doctor Portal</Link></p>
       </section>
     );
   }
@@ -77,6 +78,10 @@ export default function LoginForm() {
       </button>
       <p className="mt-5 text-center text-sm text-[var(--muted)]">
         Don&apos;t have an account? <Link className="font-semibold text-[var(--brand)] hover:underline" href="/signup">Sign up</Link>
+      </p>
+      <div className="my-5 border-t border-[var(--line)]" />
+      <p className="text-center text-sm text-[var(--muted)]">
+        Are you a doctor? <Link className="font-semibold text-[var(--brand)] hover:underline" href="/doctor/login">Log in to the Doctor Portal</Link>
       </p>
     </form>
   );
