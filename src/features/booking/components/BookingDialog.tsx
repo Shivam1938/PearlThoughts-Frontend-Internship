@@ -2,8 +2,8 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { CalendarDays } from "lucide-react";
+import { createAppointment } from "@/features/booking/api/createAppointment";
 import { getSlots } from "@/features/booking/api/getSlots";
-import { saveBookedAppointment } from "@/features/booking/storage";
 import { markDoctorAvailabilitySlotBooked } from "@/features/doctor/availability";
 import { useAuth } from "@/features/auth/hooks/auth-context";
 import type { Doctor } from "@/types/doctor";
@@ -65,39 +65,34 @@ export default function BookingDialog({ doctor, onClose }: BookingDialogProps) {
     if (selectedSlot && patientName.trim() && patientPhone.trim()) setStep("review");
   }
 
-  function handleConfirm(): void {
+  async function handleConfirm(): Promise<void> {
     const trimmedPatientName = patientName.trim();
     const trimmedPatientPhone = patientPhone.trim();
     if (!user?.id || !selectedSlot || !trimmedPatientName || !trimmedPatientPhone) return;
 
-    const appointmentId = `booking-${Date.now()}`;
-    if (selectedSlot.id.startsWith("availability-") && !markDoctorAvailabilitySlotBooked(doctor.id, selectedSlot.id, appointmentId)) {
-      setError("That slot was just booked. Please choose another time.");
+    try {
+      const appointment = await createAppointment({
+        patientId: user.id,
+        patientName: trimmedPatientName,
+        patientPhone: trimmedPatientPhone,
+        doctorId: doctor.id,
+        doctorName: doctor.name,
+        specialty: doctor.specialty,
+        photo: doctor.photo,
+        startsAt: `${selectedSlot.date}T${to24HourTime(selectedSlot.time)}`,
+        type: visitType,
+        notes: note.trim() || undefined,
+      });
+      if (selectedSlot.id.startsWith("availability-") && !markDoctorAvailabilitySlotBooked(doctor.id, selectedSlot.id, appointment.id)) {
+        setError("Your appointment was booked, but this slot is no longer available in the calendar.");
+      }
+      setStep("confirmed");
+    } catch (nextError) {
+      setError(nextError instanceof Error ? nextError.message : "Unable to book the appointment.");
       setStep("slot");
       setSelectedSlot(null);
       setSlots((current) => current.filter((slot) => slot.id !== selectedSlot.id));
-      return;
     }
-    saveBookedAppointment({
-      id: appointmentId,
-      userId: user.id,
-      patientName: trimmedPatientName,
-      patientPhone: trimmedPatientPhone,
-      doctorId: doctor.id,
-      slotId: selectedSlot.id,
-      doctorName: doctor.name,
-      specialty: doctor.specialty,
-      city: doctor.city,
-      photo: doctor.photo,
-      date: selectedSlot.date,
-      dateLabel: selectedSlot.dateLabel,
-      time: selectedSlot.time,
-      fee: doctor.fee,
-      visitType,
-      note: note.trim(),
-      status: "pending",
-    });
-    setStep("confirmed");
   }
 
   return (
@@ -177,4 +172,13 @@ export default function BookingDialog({ doctor, onClose }: BookingDialogProps) {
       </section>
     </div>
   );
+}
+
+function to24HourTime(value: string): string {
+  const match = value.match(/(\d+):(\d+)\s*(AM|PM)/i);
+  if (!match) return value;
+  let hour = Number(match[1]);
+  if (match[3].toUpperCase() === "PM" && hour !== 12) hour += 12;
+  if (match[3].toUpperCase() === "AM" && hour === 12) hour = 0;
+  return `${String(hour).padStart(2, "0")}:${match[2]}:00`;
 }
