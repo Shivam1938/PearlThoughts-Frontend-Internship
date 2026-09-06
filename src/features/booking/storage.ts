@@ -15,6 +15,12 @@ export function loadBookedAppointments(userId: string): BookedAppointment[] {
   }
 }
 
+export function loadDoctorAppointments(doctorId: string): BookedAppointment[] {
+  const stored = window.localStorage.getItem(BOOKINGS_KEY);
+  if (!stored) return [];
+  return parseAppointments(stored).filter((appointment) => appointment.doctorId === doctorId);
+}
+
 export function saveBookedAppointment(appointment: BookedAppointment): void {
   const stored = window.localStorage.getItem(BOOKINGS_KEY);
   const appointments = stored ? parseAppointments(stored) : [];
