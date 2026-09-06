@@ -44,3 +44,4 @@ PROGRESS.md
 *.tsbuildinfo
 next-env.d.ts
 Agent.md
+AgentFix.md
