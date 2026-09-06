@@ -4,7 +4,6 @@ import Link from "next/link";
 import { CalendarDays, ChevronRight, ClipboardList, UserRound } from "lucide-react";
 import { useMemo } from "react";
 import { loadDoctorAppointments } from "@/features/booking/storage";
-import DoctorLogoutButton from "@/features/doctor/components/DoctorLogoutButton";
 import { useDoctorAuth } from "@/features/doctor/hooks/doctor-auth-context";
 
 const statusClasses = { confirmed: "bg-emerald-50 text-emerald-800 ring-emerald-200", pending: "bg-amber-50 text-amber-800 ring-amber-200", cancelled: "bg-stone-100 text-stone-600 ring-stone-200" };
@@ -21,9 +20,8 @@ export default function DoctorDashboard() {
   return (
     <main className="min-h-screen bg-[var(--canvas)] px-4 py-5 sm:px-8 sm:py-8 lg:px-12">
       <div className="mx-auto max-w-6xl">
-        <header className="flex flex-col gap-5 border-b border-[var(--line)] pb-6 sm:flex-row sm:items-center sm:justify-between">
+        <header className="flex flex-col gap-5 border-b border-[var(--line)] pb-6">
           <div><p className="text-sm font-medium uppercase tracking-[0.18em] text-[var(--brand)]">Doctor portal</p><h1 className="mt-2 text-3xl font-semibold tracking-tight sm:text-4xl">Welcome back, {doctor?.name}</h1><p className="mt-2 text-[var(--muted)]">Here&apos;s what&apos;s coming up in your practice.</p></div>
-          <DoctorLogoutButton />
         </header>
 
         <section className="mt-7 grid gap-4 sm:grid-cols-2" aria-label="Quick actions">

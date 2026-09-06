@@ -7,6 +7,7 @@ import AuthShell from "@/features/auth/components/AuthShell";
 import LoginForm from "@/features/auth/components/LoginForm";
 import { useAuth } from "@/features/auth/hooks/auth-context";
 import DoctorLoginForm from "@/features/doctor/components/DoctorLoginForm";
+import DoctorPortalShell from "@/features/doctor/components/DoctorPortalShell";
 import { useDoctorAuth } from "@/features/doctor/hooks/doctor-auth-context";
 
 export default function AuthGate({ children }: { children: ReactNode }) {
@@ -19,8 +20,9 @@ export default function AuthGate({ children }: { children: ReactNode }) {
   const isDoctorRoute = pathname.startsWith("/doctor");
   const isPublicDoctorRoute = pathname === "/doctor/login" || pathname === "/doctor/register";
   if (isDoctorRoute) {
+    if (isPublicDoctorRoute) return children;
     if (!isPublicDoctorRoute && !doctor) return <AuthShell><DoctorLoginForm /></AuthShell>;
-    return children;
+    return <DoctorPortalShell>{children}</DoctorPortalShell>;
   }
 
   const isPublicAuthRoute = pathname === "/login" || pathname === "/signup";
