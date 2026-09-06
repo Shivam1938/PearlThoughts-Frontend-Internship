@@ -41,4 +41,13 @@ export function markDoctorAvailabilitySlotBooked(doctorId: string, slotId: strin
   return true;
 }
 
+export function releaseDoctorAvailabilitySlot(doctorId: string, slotId: string): void {
+  const slots = loadAllSlots();
+  const slot = slots.find((item) => item.doctorId === doctorId && item.id === slotId);
+  if (!slot) return;
+  slot.status = "available";
+  delete slot.appointmentId;
+  window.localStorage.setItem(SLOTS_KEY, JSON.stringify(slots));
+}
+
 export function loadAvailableDoctorSlots(doctorId: string): DoctorAvailabilitySlot[] { return loadDoctorAvailability(doctorId).filter((slot) => slot.status === "available"); }

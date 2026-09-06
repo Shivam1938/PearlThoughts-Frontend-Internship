@@ -2,20 +2,19 @@
 
 import Link from "next/link";
 import { CalendarDays, ChevronRight, ClipboardList, UserRound } from "lucide-react";
-import { useMemo } from "react";
-import { loadDoctorAppointments } from "@/features/booking/storage";
+import { useEffect, useState } from "react";
+import { loadDoctorAppointments, subscribeToBookingChanges } from "@/features/booking/storage";
 import { useDoctorAuth } from "@/features/doctor/hooks/doctor-auth-context";
 
 const statusClasses = { confirmed: "bg-emerald-50 text-emerald-800 ring-emerald-200", pending: "bg-amber-50 text-amber-800 ring-amber-200", cancelled: "bg-stone-100 text-stone-600 ring-stone-200" };
 
 export default function DoctorDashboard() {
   const { doctor } = useDoctorAuth();
-  const upcomingAppointments = useMemo(() => {
-    if (!doctor) return [];
-    return loadDoctorAppointments(doctor.id)
-      .filter((appointment) => appointment.date >= new Date().toISOString().slice(0, 10) && appointment.status !== "cancelled")
-      .sort((left, right) => `${left.date} ${left.time}`.localeCompare(`${right.date} ${right.time}`));
-  }, [doctor]);
+  const [, setVersion] = useState(0);
+  useEffect(() => subscribeToBookingChanges(() => setVersion((current) => current + 1)), []);
+  const upcomingAppointments = !doctor ? [] : loadDoctorAppointments(doctor.id)
+    .filter((appointment) => appointment.date >= new Date().toISOString().slice(0, 10) && appointment.status !== "cancelled")
+    .sort((left, right) => `${left.date} ${left.time}`.localeCompare(`${right.date} ${right.time}`));
 
   return (
     <main className="min-h-screen bg-[var(--canvas)] px-4 py-5 sm:px-8 sm:py-8 lg:px-12">

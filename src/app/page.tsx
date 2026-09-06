@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { CalendarCheck, CheckCircle2, Clock3, Search, ShieldAlert, Trash2 } from "lucide-react";
 import type { Appointment, AppointmentStatus } from "@/types/appointment";
-import { deleteBookedAppointment, loadBookedAppointments } from "@/features/booking/storage";
+import { deleteBookedAppointment, loadBookedAppointments, subscribeToBookingChanges } from "@/features/booking/storage";
 import type { BookedAppointment } from "@/features/booking/types";
 import { useAuth } from "@/features/auth/hooks/auth-context";
 
@@ -63,6 +63,9 @@ export default function Home() {
   const [selectedDate, setSelectedDate] = useState("");
   const [deleteCandidate, setDeleteCandidate] = useState<ScheduleAppointment | null>(null);
   const [status, setStatus] = useState<"loading" | "ready" | "error">("loading");
+  const [bookingVersion, setBookingVersion] = useState(0);
+
+  useEffect(() => subscribeToBookingChanges(() => setBookingVersion((current) => current + 1)), []);
 
   useEffect(() => {
     let isActive = true;
@@ -86,7 +89,7 @@ export default function Home() {
     }
     void loadSchedule();
     return () => { isActive = false; };
-  }, [user]);
+  }, [user, bookingVersion]);
 
   const dates = useMemo(() => Array.from(new Set(items.map((item) => item.startsAt.slice(0, 10)))), [items]);
   const dateItems = useMemo(() => items.filter((item) => item.startsAt.slice(0, 10) === selectedDate), [items, selectedDate]);
