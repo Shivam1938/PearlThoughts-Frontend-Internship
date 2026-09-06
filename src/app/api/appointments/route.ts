@@ -20,7 +20,7 @@ export async function GET(request: Request) {
 }
 
 type AppointmentAction = "confirm" | "decline" | "cancel" | "complete" | "miss" | "reschedule";
-type UpdateAppointmentRequest = { doctorId?: string; action?: AppointmentAction; startsAt?: string };
+type UpdateAppointmentRequest = { doctorId?: string; patientId?: string; action?: AppointmentAction; startsAt?: string };
 type CreateAppointmentRequest = {
   patientId?: string;
   patientName?: string;
@@ -87,10 +87,10 @@ export async function POST(request: Request) {
 
 export async function PATCH(request: Request) {
   const body = await request.json().catch(() => null) as UpdateAppointmentRequest | null;
-  if (!body?.doctorId || !body.action || !appointmentActions.includes(body.action)) return Response.json({ message: "A valid doctor ID and action are required." }, { status: 400 });
+  if (!body?.action || !appointmentActions.includes(body.action) || (!body.doctorId && (!body.patientId || body.action !== "cancel"))) return Response.json({ message: "A valid appointment action and owner ID are required." }, { status: 400 });
 
   const appointmentId = new URL(request.url).searchParams.get("id");
-  const appointment = appointments.find((item) => item.id === appointmentId && item.doctorId === body.doctorId);
+  const appointment = appointments.find((item) => item.id === appointmentId && (item.doctorId === body.doctorId || (body.action === "cancel" && item.patientId === body.patientId)));
   if (!appointment) return Response.json({ message: "Appointment not found." }, { status: 404 });
 
   const startsAt = appointment.dateTime ?? appointment.startsAt;
@@ -101,9 +101,12 @@ export async function PATCH(request: Request) {
     if (appointment.status !== "pending") return invalidTransition("Only pending appointments can be confirmed or declined.");
     appointment.status = body.action === "confirm" ? "confirmed" : "cancelled";
   } else if (body.action === "cancel" || body.action === "reschedule") {
-    if (appointment.status !== "confirmed" && appointment.status !== "upcoming") return invalidTransition("Only confirmed or upcoming appointments can be changed.");
-    if (body.action === "cancel") appointment.status = "cancelled";
+    if (body.action === "cancel") {
+      if (appointment.status !== "pending" && appointment.status !== "confirmed" && appointment.status !== "upcoming") return invalidTransition("Only active appointments can be cancelled.");
+      appointment.status = "cancelled";
+    }
     else {
+      if (appointment.status !== "confirmed" && appointment.status !== "upcoming") return invalidTransition("Only confirmed or upcoming appointments can be rescheduled.");
       if (!body.startsAt || Number.isNaN(new Date(body.startsAt).getTime())) return Response.json({ message: "A valid new appointment time is required." }, { status: 400 });
       const targetSlot = availabilitySlots.find((slot) => slot.doctorId === appointment.doctorId && slot.start === body.startsAt);
       const conflictingAppointment = appointments.some((item) => item.id !== appointment.id && item.doctorId === appointment.doctorId && item.status !== "cancelled" && (item.dateTime ?? item.startsAt) === body.startsAt);

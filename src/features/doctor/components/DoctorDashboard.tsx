@@ -1,9 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { CalendarCheck, CalendarDays, CheckCircle2, ChevronRight, ClipboardList, Clock3, ShieldAlert, UserRound } from "lucide-react";
+import { CalendarCheck, CalendarDays, CheckCircle2, ChevronRight, ClipboardList, Clock3, ShieldAlert, Trash2, UserRound } from "lucide-react";
 import { useEffect, useState } from "react";
 import type { Appointment, AppointmentStatus } from "@/types/appointment";
+import { updateDoctorAppointment } from "@/features/doctor/api/updateAppointment";
 import { useDoctorAuth } from "@/features/doctor/hooks/doctor-auth-context";
 
 const statusClasses: Record<AppointmentStatus, string> = { pending: "bg-amber-50 text-amber-800 ring-amber-200", confirmed: "bg-emerald-50 text-emerald-800 ring-emerald-200", upcoming: "bg-sky-50 text-sky-800 ring-sky-200", completed: "bg-emerald-50 text-emerald-800 ring-emerald-200", cancelled: "bg-stone-100 text-stone-600 ring-stone-200", missed: "bg-rose-50 text-rose-800 ring-rose-200" };
@@ -12,6 +13,9 @@ export default function DoctorDashboard() {
   const { doctor } = useDoctorAuth();
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [loading, setLoading] = useState(true);
+  const [refreshKey, setRefreshKey] = useState(0);
+  const [cancellingId, setCancellingId] = useState<string | null>(null);
+  const [actionError, setActionError] = useState<string | null>(null);
   const [now] = useState(() => Date.now());
 
   useEffect(() => {
@@ -22,12 +26,22 @@ export default function DoctorDashboard() {
       .then((data) => { if (active) setAppointments(data); })
       .finally(() => { if (active) setLoading(false); });
     return () => { active = false; };
-  }, [doctor]);
+  }, [doctor, refreshKey]);
 
   const upcomingAppointments = appointments.filter((appointment) => (appointment.status === "confirmed" || appointment.status === "upcoming") && new Date(appointment.dateTime ?? appointment.startsAt).getTime() >= now).sort((left, right) => (left.dateTime ?? left.startsAt).localeCompare(right.dateTime ?? right.startsAt));
   const completed = appointments.filter((appointment) => appointment.status === "completed").length;
   const pending = appointments.filter((appointment) => appointment.status === "pending").length;
   const cancelled = appointments.filter((appointment) => appointment.status === "cancelled").length;
+  async function cancelAppointment(appointment: Appointment): Promise<void> {
+    if (!doctor) return;
+    setActionError(null);
+    setCancellingId(appointment.id);
+    try {
+      await updateDoctorAppointment(doctor.id, appointment.id, "cancel");
+      setRefreshKey((current) => current + 1);
+    } catch (actionFailure: unknown) { setActionError(actionFailure instanceof Error ? actionFailure.message : "Unable to cancel appointment."); }
+    finally { setCancellingId(null); }
+  }
 
   return (
     <main className="min-h-screen bg-[var(--canvas)] px-4 py-5 sm:px-8 sm:py-8 lg:px-12">
@@ -50,7 +64,7 @@ export default function DoctorDashboard() {
 
         <section className="mt-7 overflow-hidden rounded-xl border border-[var(--line)] bg-white shadow-sm" aria-labelledby="upcoming-title">
           <div className="flex items-center justify-between gap-4 border-b border-[var(--line)] px-5 py-4 sm:px-6"><div><p className="text-sm font-medium text-[var(--brand)]">Schedule</p><h2 className="mt-1 text-xl font-semibold" id="upcoming-title">Upcoming appointments</h2></div><span className="rounded-full bg-emerald-50 px-3 py-1 text-sm font-semibold text-emerald-800">{upcomingAppointments.length} upcoming</span></div>
-          {loading ? <p className="px-6 py-12 text-center text-sm text-[var(--muted)]">Loading appointments…</p> : upcomingAppointments.length === 0 ? <div className="px-6 py-12 text-center"><CalendarDays className="mx-auto size-8 text-[var(--brand)]" aria-hidden="true" /><p className="mt-4 font-semibold">No upcoming appointments.</p><p className="mt-1 text-sm text-[var(--muted)]">Appointments booked by patients will appear here.</p></div> : <ul className="divide-y divide-[var(--line)]">{upcomingAppointments.map((appointment) => <li className="flex flex-col gap-3 px-5 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6" key={appointment.id}><div className="flex items-center gap-3"><div className="grid size-11 place-items-center rounded-full bg-emerald-100 font-semibold text-[var(--brand-deep)]">{appointment.patient.initials}</div><div><p className="font-semibold">{appointment.patient.name}</p><p className="mt-0.5 text-sm text-[var(--muted)]">{appointment.reason}</p></div></div><div className="flex items-center justify-between gap-4 sm:justify-end"><p className="text-sm font-medium">{formatDate(appointment.dateTime ?? appointment.startsAt)}</p><span className={`rounded-full px-2.5 py-1 text-xs font-medium capitalize ring-1 ring-inset ${statusClasses[appointment.status]}`}>{appointment.status}</span><Link className="rounded-lg p-2 text-[var(--muted)] hover:bg-stone-50 hover:text-[var(--brand)]" href={`/doctor/appointments?appointmentId=${encodeURIComponent(appointment.id)}`} aria-label={`View ${appointment.patient.name}'s details`} title="View patient details"><UserRound className="size-4" aria-hidden="true" /></Link><Link className="rounded-lg p-2 text-[var(--muted)] hover:bg-stone-50 hover:text-[var(--brand)]" href={`/doctor/calendar?date=${encodeURIComponent((appointment.dateTime ?? appointment.startsAt).slice(0, 10))}`} aria-label={`Open calendar for ${appointment.patient.name}'s appointment`} title="Open calendar"><CalendarDays className="size-4" aria-hidden="true" /></Link></div></li>)}</ul>}
+          {actionError && <p className="border-b border-red-100 bg-red-50 px-6 py-3 text-sm text-red-700" role="alert">{actionError}</p>}{loading ? <p className="px-6 py-12 text-center text-sm text-[var(--muted)]">Loading appointments…</p> : upcomingAppointments.length === 0 ? <div className="px-6 py-12 text-center"><CalendarDays className="mx-auto size-8 text-[var(--brand)]" aria-hidden="true" /><p className="mt-4 font-semibold">No upcoming appointments.</p><p className="mt-1 text-sm text-[var(--muted)]">Appointments booked by patients will appear here.</p></div> : <ul className="divide-y divide-[var(--line)]">{upcomingAppointments.map((appointment) => <li className="flex flex-col gap-3 px-5 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6" key={appointment.id}><div className="flex items-center gap-3"><div className="grid size-11 place-items-center rounded-full bg-emerald-100 font-semibold text-[var(--brand-deep)]">{appointment.patient.initials}</div><div><p className="font-semibold">{appointment.patient.name}</p><p className="mt-0.5 text-sm text-[var(--muted)]">{appointment.reason}</p></div></div><div className="flex items-center justify-between gap-4 sm:justify-end"><p className="text-sm font-medium">{formatDate(appointment.dateTime ?? appointment.startsAt)}</p><span className={`rounded-full px-2.5 py-1 text-xs font-medium capitalize ring-1 ring-inset ${statusClasses[appointment.status]}`}>{appointment.status}</span><button className="rounded-lg p-2 text-slate-400 hover:bg-red-50 hover:text-red-700 disabled:cursor-not-allowed disabled:opacity-50" type="button" onClick={() => void cancelAppointment(appointment)} disabled={cancellingId === appointment.id} aria-label={`Cancel ${appointment.patient.name}'s appointment`} title="Cancel appointment"><Trash2 className="size-4" aria-hidden="true" /></button><Link className="rounded-lg p-2 text-[var(--muted)] hover:bg-stone-50 hover:text-[var(--brand)]" href={`/doctor/appointments?appointmentId=${encodeURIComponent(appointment.id)}`} aria-label={`View ${appointment.patient.name}'s details`} title="View patient details"><UserRound className="size-4" aria-hidden="true" /></Link><Link className="rounded-lg p-2 text-[var(--muted)] hover:bg-stone-50 hover:text-[var(--brand)]" href={`/doctor/calendar?date=${encodeURIComponent((appointment.dateTime ?? appointment.startsAt).slice(0, 10))}`} aria-label={`Open calendar for ${appointment.patient.name}'s appointment`} title="Open calendar"><CalendarDays className="size-4" aria-hidden="true" /></Link></div></li>)}</ul>}
         </section>
       </div>
     </main>

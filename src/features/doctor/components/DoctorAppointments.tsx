@@ -1,6 +1,6 @@
 "use client";
 
-import { CalendarDays, Search, UserRound } from "lucide-react";
+import { CalendarDays, Search, Trash2, UserRound } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { getDoctorAppointments } from "@/features/doctor/api/getAppointments";
@@ -39,6 +39,9 @@ export default function DoctorAppointments() {
   const [isSaving, setIsSaving] = useState(false);
   const [isRescheduling, setIsRescheduling] = useState(false);
   const [rescheduleTime, setRescheduleTime] = useState("");
+  const [dismissedIds, setDismissedIds] = useState<string[]>([]);
+  const [cardActionError, setCardActionError] = useState<string | null>(null);
+  const [cardActionId, setCardActionId] = useState<string | null>(null);
   const [now] = useState(() => Date.now());
   const isLoading = !isReady || (doctor !== null && loading);
 
@@ -57,7 +60,7 @@ export default function DoctorAppointments() {
   }, [doctor, refreshKey, status]);
 
   const filteredAppointments = appointments.filter((appointment) =>
-    (!date || appointmentDate(appointment) === date) && (!query.trim() || appointment.patient.name.toLowerCase().includes(query.trim().toLowerCase())),
+    !dismissedIds.includes(appointment.id) && (!date || appointmentDate(appointment) === date) && (!query.trim() || appointment.patient.name.toLowerCase().includes(query.trim().toLowerCase())),
   );
   const selectedAppointment = filteredAppointments.find((appointment) => appointment.id === selectedId) ?? null;
   async function runAction(action: AppointmentAction, startsAt?: string): Promise<void> {
@@ -71,11 +74,25 @@ export default function DoctorAppointments() {
     } catch (actionFailure: unknown) { setActionError(actionFailure instanceof Error ? actionFailure.message : "Unable to update appointment."); }
     finally { setIsSaving(false); }
   }
+  async function handleCardControl(appointment: Appointment): Promise<void> {
+    if (appointment.status === "completed" || appointment.status === "cancelled" || appointment.status === "missed") {
+      setDismissedIds((current) => [...current, appointment.id]);
+      return;
+    }
+    if (!doctor) return;
+    setCardActionError(null);
+    setCardActionId(appointment.id);
+    try {
+      await updateDoctorAppointment(doctor.id, appointment.id, "cancel");
+      setRefreshKey((current) => current + 1);
+    } catch (actionFailure: unknown) { setCardActionError(actionFailure instanceof Error ? actionFailure.message : "Unable to cancel appointment."); }
+    finally { setCardActionId(null); }
+  }
 
   return <main className="min-h-screen bg-[var(--canvas)] px-4 py-5 sm:px-8 sm:py-8 lg:px-12"><div className="mx-auto max-w-6xl">
     <header className="border-b border-[var(--line)] pb-6"><p className="text-sm font-medium uppercase tracking-[.18em] text-[var(--brand)]">Doctor portal</p><h1 className="mt-2 text-3xl font-semibold tracking-tight sm:text-4xl">All Appointments</h1><p className="mt-2 text-[var(--muted)]">Review and filter appointments booked with your practice.</p></header>
     <section className="mt-7 rounded-xl border border-[var(--line)] bg-white p-4 shadow-sm sm:p-5" aria-label="Appointment filters"><div className="flex gap-2 overflow-x-auto pb-1" role="tablist" aria-label="Appointment status">{statusTabs.map((tab) => <button className={`shrink-0 rounded-lg px-3 py-2 text-sm font-semibold ${status === tab.value ? "bg-[var(--brand)] text-white" : "text-[var(--muted)] hover:bg-stone-50 hover:text-[var(--ink)]"}`} type="button" role="tab" aria-selected={status === tab.value} key={tab.value} onClick={() => { setLoading(true); setError(null); setStatus(tab.value); }}>{tab.label}</button>)}</div><div className="mt-4 grid gap-3 sm:grid-cols-[1fr_auto]"><label className="relative"><span className="sr-only">Search by patient name</span><Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-[var(--muted)]" aria-hidden="true" /><input className="w-full rounded-lg border border-[var(--line)] bg-[var(--canvas)] py-2.5 pl-10 pr-3 text-sm outline-none focus:border-[var(--brand)] focus:ring-4 focus:ring-emerald-100" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search by patient name" /></label><label><span className="sr-only">Filter by date</span><input className="w-full rounded-lg border border-[var(--line)] bg-[var(--canvas)] px-3 py-2.5 text-sm outline-none focus:border-[var(--brand)] focus:ring-4 focus:ring-emerald-100" type="date" value={date} onChange={(event) => setDate(event.target.value)} /></label></div></section>
-    <section className="mt-5 grid gap-5 lg:grid-cols-[minmax(0,1.35fr)_minmax(18rem,.65fr)]" aria-live="polite"><div className="overflow-hidden rounded-xl border border-[var(--line)] bg-white shadow-sm"><div className="border-b border-[var(--line)] px-5 py-4 sm:px-6"><p className="text-sm text-[var(--muted)]">Showing {filteredAppointments.length} appointment{filteredAppointments.length === 1 ? "" : "s"}</p></div>{isLoading ? <p className="px-6 py-12 text-center text-sm text-[var(--muted)]">Loading appointments…</p> : error ? <p className="px-6 py-12 text-center text-sm text-rose-700">{error}</p> : filteredAppointments.length === 0 ? <EmptyState /> : <ul className="divide-y divide-[var(--line)]">{filteredAppointments.map((appointment) => <li key={appointment.id}><button className={`grid w-full gap-3 px-5 py-4 text-left transition hover:bg-stone-50 sm:grid-cols-[1fr_auto] sm:items-center sm:px-6 ${selectedId === appointment.id ? "bg-emerald-50/60" : ""}`} type="button" onClick={() => setSelectedId(appointment.id)} aria-pressed={selectedId === appointment.id}><span className="min-w-0"><span className="block truncate font-semibold">{appointment.patient.name}</span><span className="mt-0.5 block text-sm text-[var(--muted)]">{appointment.type ?? appointment.reason} · {formatDate(appointment)}</span></span><span className={`w-fit rounded-full px-2.5 py-1 text-xs font-medium capitalize ring-1 ring-inset ${statusClasses[appointment.status]}`}>{appointment.status}</span></button></li>)}</ul>}</div><AppointmentDetails appointment={selectedAppointment} actionError={actionError} isRescheduling={isRescheduling} isSaving={isSaving} now={now} rescheduleTime={rescheduleTime} onAction={runAction} onRescheduleTimeChange={setRescheduleTime} onStartReschedule={() => { setActionError(null); setRescheduleTime(selectedAppointment ? toLocalInputValue(selectedAppointment.dateTime ?? selectedAppointment.startsAt) : ""); setIsRescheduling(true); }} onStopReschedule={() => setIsRescheduling(false)} /></section>
+    <section className="mt-5 grid gap-5 lg:grid-cols-[minmax(0,1.35fr)_minmax(18rem,.65fr)]" aria-live="polite"><div className="overflow-hidden rounded-xl border border-[var(--line)] bg-white shadow-sm"><div className="border-b border-[var(--line)] px-5 py-4 sm:px-6"><p className="text-sm text-[var(--muted)]">Showing {filteredAppointments.length} appointment{filteredAppointments.length === 1 ? "" : "s"}</p></div>{cardActionError && <p className="border-b border-red-100 bg-red-50 px-5 py-3 text-sm text-red-700" role="alert">{cardActionError}</p>}{isLoading ? <p className="px-6 py-12 text-center text-sm text-[var(--muted)]">Loading appointments…</p> : error ? <p className="px-6 py-12 text-center text-sm text-rose-700">{error}</p> : filteredAppointments.length === 0 ? <EmptyState /> : <ul className="divide-y divide-[var(--line)]">{filteredAppointments.map((appointment) => <li className="flex items-center" key={appointment.id}><button className={`grid min-w-0 flex-1 gap-3 px-5 py-4 text-left transition hover:bg-stone-50 sm:grid-cols-[1fr_auto] sm:items-center sm:px-6 ${selectedId === appointment.id ? "bg-emerald-50/60" : ""}`} type="button" onClick={() => setSelectedId(appointment.id)} aria-pressed={selectedId === appointment.id}><span className="min-w-0"><span className="block truncate font-semibold">{appointment.patient.name}</span><span className="mt-0.5 block text-sm text-[var(--muted)]">{appointment.type ?? appointment.reason} · {formatDate(appointment)}</span></span><span className={`w-fit rounded-full px-2.5 py-1 text-xs font-medium capitalize ring-1 ring-inset ${statusClasses[appointment.status]}`}>{appointment.status}</span></button><button className="mr-5 rounded-lg p-2 text-slate-400 hover:bg-red-50 hover:text-red-700 disabled:cursor-not-allowed disabled:opacity-50" type="button" onClick={() => void handleCardControl(appointment)} disabled={cardActionId === appointment.id} aria-label={`${appointment.status === "pending" || appointment.status === "confirmed" || appointment.status === "upcoming" ? "Cancel" : "Dismiss"} ${appointment.patient.name}'s appointment`} title={appointment.status === "pending" || appointment.status === "confirmed" || appointment.status === "upcoming" ? "Cancel appointment" : "Dismiss appointment"}><Trash2 className="size-4" /></button></li>)}</ul>}</div><AppointmentDetails appointment={selectedAppointment} actionError={actionError} isRescheduling={isRescheduling} isSaving={isSaving} now={now} rescheduleTime={rescheduleTime} onAction={runAction} onRescheduleTimeChange={setRescheduleTime} onStartReschedule={() => { setActionError(null); setRescheduleTime(selectedAppointment ? toLocalInputValue(selectedAppointment.dateTime ?? selectedAppointment.startsAt) : ""); setIsRescheduling(true); }} onStopReschedule={() => setIsRescheduling(false)} /></section>
   </div></main>;
 }
 

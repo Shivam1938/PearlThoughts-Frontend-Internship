@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { CalendarCheck, CheckCircle2, Clock3, Search, ShieldAlert, Trash2 } from "lucide-react";
 import type { Appointment, AppointmentStatus } from "@/types/appointment";
+import { cancelPatientAppointment } from "@/features/appointments/api/cancelPatientAppointment";
 import { getPatientAppointments } from "@/features/appointments/api/getPatientAppointments";
 import { createAppointment } from "@/features/booking/api/createAppointment";
 import { deleteBookedAppointment, loadBookedAppointments, subscribeToBookingChanges } from "@/features/booking/storage";
@@ -80,6 +81,8 @@ export default function Home() {
   const [reviewRating, setReviewRating] = useState("5");
   const [reviewComment, setReviewComment] = useState("");
   const [reviewSubmitted, setReviewSubmitted] = useState(false);
+  const [cardActionError, setCardActionError] = useState<string | null>(null);
+  const [cancellingId, setCancellingId] = useState<string | null>(null);
   const [status, setStatus] = useState<"loading" | "ready" | "error">("loading");
   const [bookingVersion, setBookingVersion] = useState(0);
 
@@ -156,6 +159,25 @@ export default function Home() {
     setSelectedId(firstAppointment?.id);
   }
 
+  async function handleCardControl(appointment: ScheduleAppointment): Promise<void> {
+    if (appointment.status === "completed" || appointment.status === "cancelled" || appointment.status === "missed") {
+      setItems((current) => current.filter((item) => item.id !== appointment.id));
+      setSelectedId((current) => current === appointment.id ? undefined : current);
+      return;
+    }
+    if (!user) return;
+    setCardActionError(null);
+    setCancellingId(appointment.id);
+    try {
+      const cancelledAppointment = await cancelPatientAppointment(user.id, appointment.id);
+      setItems((current) => current.map((item) => item.id === cancelledAppointment.id ? { ...item, ...cancelledAppointment } : item));
+    } catch (actionFailure: unknown) {
+      setCardActionError(actionFailure instanceof Error ? actionFailure.message : "Unable to cancel appointment.");
+    } finally {
+      setCancellingId(null);
+    }
+  }
+
   function openReview(doctor: string): void {
     setReviewDoctor(doctor);
     setReviewRating("5");
@@ -227,7 +249,7 @@ export default function Home() {
         {status === "ready" && <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_20rem]">
           <section className="overflow-hidden rounded-xl border border-[var(--line)] bg-white" aria-labelledby="schedule-title">
             <div className="flex flex-col gap-4 border-b border-[var(--line)] px-5 py-4 sm:flex-row sm:items-center sm:justify-between"><h2 id="schedule-title" className="font-semibold">Schedule</h2><div className="flex gap-1 rounded-lg bg-stone-100 p-1" role="group" aria-label="Filter appointments">{(["upcoming", "completed", "cancelled", "missed"] as Filter[]).map((item) => <button key={item} type="button" onClick={() => setFilter(item)} className={`rounded-md px-3 py-1.5 text-sm capitalize ${filter === item ? "bg-white font-semibold shadow-sm" : "text-[var(--muted)]"}`}>{item} <span className="ml-1 text-xs">{tabCounts[item]}</span></button>)}</div></div>
-            {visible.length === 0 ? <p className="p-6 text-sm text-[var(--muted)]">No appointments for this date and filter.</p> : <div>{visible.map((item) => <div key={item.id} className={`flex items-center border-b border-[var(--line)] last:border-b-0 hover:bg-sky-50/50 ${selectedId === item.id ? "bg-sky-50/60" : ""}`}><button type="button" onClick={() => setSelectedId(item.id)} className="flex min-w-0 flex-1 items-center gap-3 px-4 py-4 text-left sm:gap-4 sm:px-5"><span className="w-16 shrink-0 text-sm text-[var(--muted)]">{formatTime(item.startsAt)}</span><span className="grid size-10 shrink-0 place-items-center rounded-full bg-sky-100 text-xs font-semibold text-sky-700">{item.clinician.slice(0, 2).toUpperCase()}</span><span className="min-w-0 flex-1"><span className="block truncate font-semibold">{item.clinician} <span className="font-normal text-[var(--muted)]">· {item.durationMinutes} min</span></span><span className="mt-1 block truncate text-sm text-[var(--muted)]">{formatDate(item.startsAt.slice(0, 10))} · {item.reason}</span></span><span className={`rounded-full px-2.5 py-1 text-xs font-medium ring-1 ${statusStyles[item.status]}`}>{patientStatusLabels[item.status]}</span></button>{item.booking && <button type="button" onClick={() => setDeleteCandidate(item)} className="mr-4 rounded-lg p-2 text-slate-400 hover:bg-red-50 hover:text-red-600" aria-label={`Delete ${item.clinician}'s appointment`} title="Delete appointment"><Trash2 className="size-4" /></button>}</div>)}</div>}
+            {cardActionError && <p className="border-b border-red-100 bg-red-50 px-5 py-3 text-sm text-red-700" role="alert">{cardActionError}</p>}{visible.length === 0 ? <p className="p-6 text-sm text-[var(--muted)]">No appointments for this date and filter.</p> : <div>{visible.map((item) => <div key={item.id} className={`flex items-center border-b border-[var(--line)] last:border-b-0 hover:bg-sky-50/50 ${selectedId === item.id ? "bg-sky-50/60" : ""}`}><button type="button" onClick={() => setSelectedId(item.id)} className="flex min-w-0 flex-1 items-center gap-3 px-4 py-4 text-left sm:gap-4 sm:px-5"><span className="w-16 shrink-0 text-sm text-[var(--muted)]">{formatTime(item.startsAt)}</span><span className="grid size-10 shrink-0 place-items-center rounded-full bg-sky-100 text-xs font-semibold text-sky-700">{item.clinician.slice(0, 2).toUpperCase()}</span><span className="min-w-0 flex-1"><span className="block truncate font-semibold">{item.clinician} <span className="font-normal text-[var(--muted)]">· {item.durationMinutes} min</span></span><span className="mt-1 block truncate text-sm text-[var(--muted)]">{formatDate(item.startsAt.slice(0, 10))} · {item.reason}</span></span><span className={`rounded-full px-2.5 py-1 text-xs font-medium ring-1 ${statusStyles[item.status]}`}>{patientStatusLabels[item.status]}</span></button><button type="button" onClick={() => void handleCardControl(item)} disabled={cancellingId === item.id} className="mr-4 rounded-lg p-2 text-slate-400 hover:bg-red-50 hover:text-red-600 disabled:cursor-not-allowed disabled:opacity-50" aria-label={`${item.status === "pending" || item.status === "confirmed" || item.status === "upcoming" ? "Cancel" : "Dismiss"} ${item.clinician}'s appointment`} title={item.status === "pending" || item.status === "confirmed" || item.status === "upcoming" ? "Cancel appointment" : "Dismiss appointment"}><Trash2 className="size-4" /></button>{item.booking && <button type="button" onClick={() => setDeleteCandidate(item)} className="mr-4 rounded-lg p-2 text-slate-400 hover:bg-red-50 hover:text-red-600" aria-label={`Delete ${item.clinician}'s appointment`} title="Delete appointment"><Trash2 className="size-4" /></button>}</div>)}</div>}
           </section>
           <aside className="rounded-xl border border-[var(--line)] bg-white p-5" aria-live="polite"><p className="text-sm font-medium text-[var(--muted)]">Appointment details</p>{selected ? <div className="mt-5 space-y-4"><div><p className="text-sm text-[var(--muted)]">Patient name</p><p className="font-semibold">{selected.patient.name}</p>{selected.patientPhone && <p className="mt-1 text-sm text-[var(--muted)]">{selected.patientPhone}</p>}</div><div><p className="text-sm text-[var(--muted)]">Time</p><p>{formatTime(selected.startsAt)}</p></div><div><p className="text-sm text-[var(--muted)]">Visit details</p><p>{selected.reason}</p>{selected.note && <p className="mt-1 text-sm text-[var(--muted)]">{selected.note}</p>}</div><div><p className="text-sm text-[var(--muted)]">Care team</p><div className="mt-2 flex items-center gap-3">{selected.photo ? <img src={selected.photo} alt="" className="size-10 rounded-full object-cover" /> : <span className="grid size-10 place-items-center rounded-full bg-sky-100 text-xs font-semibold text-sky-700">{selected.clinician.slice(0, 2).toUpperCase()}</span>}<div><p className="font-medium">{selected.clinician}</p><p className="text-sm text-[var(--muted)]">{selected.specialty}</p></div></div></div><CompletedAppointmentActions appointment={selected} onReview={() => openReview(selected.clinician)} /></div> : <p className="mt-5 text-sm text-[var(--muted)]">Select an appointment to view details.</p>}</aside>
         </div>}
