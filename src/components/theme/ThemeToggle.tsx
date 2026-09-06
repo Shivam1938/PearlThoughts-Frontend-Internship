@@ -15,7 +15,9 @@ export default function ThemeToggle() {
       aria-label={isDark ? "Switch to light mode" : "Switch to dark mode"}
       title={isDark ? "Switch to light mode" : "Switch to dark mode"}
     >
-      {isDark ? <Sun className="size-4" aria-hidden="true" /> : <Moon className="size-4" aria-hidden="true" />}
+      <span className="grid size-4 place-items-center" aria-hidden="true" suppressHydrationWarning>
+        {isDark ? <Sun className="size-4 shrink-0" strokeWidth={2} /> : <Moon className="size-4 shrink-0" strokeWidth={2} />}
+      </span>
     </button>
   );
 }

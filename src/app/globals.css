@@ -47,4 +47,12 @@ main:has(#dashboard-title) aside dl > div:nth-child(2) { display: none; }
 .date-rail { scrollbar-width: none; -ms-overflow-style: none; }
 .date-rail::-webkit-scrollbar { display: none; }
 .auth-password-input::-ms-reveal, .auth-password-input::-ms-clear { display: none; }
+.doctor-registration-scrollbar { scrollbar-width: thin; scrollbar-color: #64748b transparent; }
+.doctor-registration-scrollbar::-webkit-scrollbar { width: 8px; }
+.doctor-registration-scrollbar::-webkit-scrollbar-track { background: transparent; }
+.doctor-registration-scrollbar::-webkit-scrollbar-thumb { background: #64748b; border: 2px solid transparent; border-radius: 999px; background-clip: content-box; }
+.doctor-registration-scrollbar::-webkit-scrollbar-thumb:hover { background-color: #475569; }
+[data-theme="dark"] .doctor-registration-scrollbar { scrollbar-color: #7891ae transparent; }
+[data-theme="dark"] .doctor-registration-scrollbar::-webkit-scrollbar-thumb { background-color: #7891ae; }
+[data-theme="dark"] .doctor-registration-scrollbar::-webkit-scrollbar-thumb:hover { background-color: #a8bdd3; }
 @media (prefers-reduced-motion: no-preference) { button, a { transition: transform 160ms cubic-bezier(0.23, 1, 0.32, 1), background-color 160ms ease, color 160ms ease, border-color 160ms ease; } button:active { transform: scale(0.97); } }
