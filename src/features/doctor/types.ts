@@ -6,13 +6,15 @@ export type DoctorAccount = {
   specialization: string;
   qualification: string;
   experienceYears: number;
+  age: number;
   phone: string;
   clinicAddress: string;
   bio: string;
   profileImage: string;
+  licenseDocument: string;
 };
 
-export type DoctorRegistrationRequest = Omit<DoctorAccount, "id" | "profileImage">;
+export type DoctorRegistrationRequest = Omit<DoctorAccount, "id" | "profileImage" | "age" | "licenseDocument">;
 
 export type DoctorRegistrationResponse = {
   doctor: Omit<DoctorAccount, "password">;
@@ -32,7 +34,7 @@ export type DoctorLoginResponse = {
 
 export type DoctorRegistrationFormErrors = Partial<Record<keyof DoctorRegistrationRequest | "confirmPassword", string>>;
 
-export type DoctorProfileFields = Pick<DoctorUser, "name" | "email" | "specialization" | "qualification" | "experienceYears" | "phone" | "clinicAddress" | "bio" | "profileImage">;
+export type DoctorProfileFields = Pick<DoctorUser, "name" | "email" | "specialization" | "qualification" | "experienceYears" | "age" | "phone" | "clinicAddress" | "bio" | "profileImage" | "licenseDocument">;
 
 export type DoctorAvailabilitySlot = {
   id: string;

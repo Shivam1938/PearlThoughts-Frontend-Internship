@@ -29,6 +29,8 @@ export default function BookingDialog({ doctor, onClose }: BookingDialogProps) {
   const [step, setStep] = useState<BookingStep>("slot");
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [nameError, setNameError] = useState<string | null>(null);
+  const [phoneError, setPhoneError] = useState<string | null>(null);
 
   useEffect(() => {
     let isActive = true;
@@ -62,7 +64,28 @@ export default function BookingDialog({ doctor, onClose }: BookingDialogProps) {
   }
 
   function handleContinue(): void {
-    if (selectedSlot && patientName.trim() && patientPhone.trim()) setStep("review");
+    if (!selectedSlot) return;
+
+    const trimmedName = patientName.trim();
+    const trimmedPhone = patientPhone.trim();
+    let hasError = false;
+
+    if (!trimmedName) {
+      setNameError("Patient name is required");
+      hasError = true;
+    } else {
+      setNameError(null);
+    }
+
+    if (!trimmedPhone) {
+      setPhoneError("Phone number is required");
+      hasError = true;
+    } else {
+      setPhoneError(null);
+    }
+
+    if (hasError) return;
+    setStep("review");
   }
 
   async function handleConfirm(): Promise<void> {
@@ -148,11 +171,13 @@ export default function BookingDialog({ doctor, onClose }: BookingDialogProps) {
               <div className="mt-6 grid gap-3 sm:grid-cols-2">
                 <label className="block text-sm font-semibold text-slate-900" htmlFor="booking-patient-name">
                   Patient name
-                  <input id="booking-patient-name" value={patientName} onChange={(event) => setPatientName(event.target.value)} autoComplete="name" placeholder="Enter patient name" className="mt-2 w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm font-normal text-slate-700 outline-none focus:border-sky-600 focus:ring-4 focus:ring-sky-100" />
+                  <input id="booking-patient-name" value={patientName} onChange={(event) => { setPatientName(event.target.value); if (nameError) setNameError(null); }} autoComplete="name" placeholder="Enter patient name" aria-invalid={nameError ? true : undefined} aria-describedby={nameError ? "booking-patient-name-error" : undefined} className={`mt-2 w-full rounded-xl border px-3 py-2.5 text-sm font-normal text-slate-700 outline-none focus:ring-4 ${nameError ? "border-red-400 focus:border-red-500 focus:ring-red-100" : "border-slate-200 focus:border-sky-600 focus:ring-sky-100"}`} />
+                  {nameError && <span id="booking-patient-name-error" role="alert" className="mt-1.5 block text-xs font-normal text-red-600">{nameError}</span>}
                 </label>
                 <label className="block text-sm font-semibold text-slate-900" htmlFor="booking-patient-phone">
                   Phone number
-                  <input id="booking-patient-phone" value={patientPhone} onChange={(event) => setPatientPhone(event.target.value)} autoComplete="tel" inputMode="tel" placeholder="Enter phone number" className="mt-2 w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm font-normal text-slate-700 outline-none focus:border-sky-600 focus:ring-4 focus:ring-sky-100" />
+                  <input id="booking-patient-phone" value={patientPhone} onChange={(event) => { setPatientPhone(event.target.value); if (phoneError) setPhoneError(null); }} autoComplete="tel" inputMode="tel" placeholder="Enter phone number" aria-invalid={phoneError ? true : undefined} aria-describedby={phoneError ? "booking-patient-phone-error" : undefined} className={`mt-2 w-full rounded-xl border px-3 py-2.5 text-sm font-normal text-slate-700 outline-none focus:ring-4 ${phoneError ? "border-red-400 focus:border-red-500 focus:ring-red-100" : "border-slate-200 focus:border-sky-600 focus:ring-sky-100"}`} />
+                  {phoneError && <span id="booking-patient-phone-error" role="alert" className="mt-1.5 block text-xs font-normal text-red-600">{phoneError}</span>}
                 </label>
               </div>
               <label className="mt-6 block text-sm font-semibold text-slate-900" htmlFor="booking-visit-type">

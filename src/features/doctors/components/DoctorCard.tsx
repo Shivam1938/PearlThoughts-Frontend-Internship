@@ -1,8 +1,9 @@
 "use client";
 
 import type { Doctor } from "@/types/doctor";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import BookingDialog from "@/features/booking/components/BookingDialog";
+import { getSlotAvailabilitySummary, type SlotAvailabilitySummary } from "@/features/booking/api/getSlots";
 
 type DoctorCardProps = {
   doctor: Doctor;
@@ -10,6 +11,15 @@ type DoctorCardProps = {
 
 export default function DoctorCard({ doctor }: DoctorCardProps) {
   const [isBookingOpen, setIsBookingOpen] = useState(false);
+  const [summary, setSummary] = useState<SlotAvailabilitySummary | null>(null);
+
+  useEffect(() => {
+    let isActive = true;
+    getSlotAvailabilitySummary(doctor.id)
+      .then((next) => { if (isActive) setSummary(next); })
+      .catch(() => { if (isActive) setSummary(null); });
+    return () => { isActive = false; };
+  }, [doctor.id]);
 
   return (
     <>
@@ -28,6 +38,12 @@ export default function DoctorCard({ doctor }: DoctorCardProps) {
           <p className="mt-2 text-sm text-[var(--muted)]">
             {doctor.city} · {doctor.age} years old · {doctor.experience} years experience
           </p>
+          {summary && summary.total > 0 && (
+            <p className="mt-1.5 text-xs font-medium text-[var(--muted)]">
+              {summary.total} {summary.total === 1 ? "slot" : "slots"}
+              {summary.booked > 0 ? ` · ${summary.booked} booked` : " · all open"}
+            </p>
+          )}
         </div>
       </div>
 

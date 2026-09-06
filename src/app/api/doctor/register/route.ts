@@ -44,10 +44,12 @@ export async function POST(request: Request) {
     specialization: body.specialization.trim(),
     qualification: body.qualification.trim(),
     experienceYears: body.experienceYears,
+    age: 0,
     phone: body.phone.trim(),
     clinicAddress: body.clinicAddress.trim(),
     bio: body.bio.trim(),
     profileImage: "",
+    licenseDocument: "",
   };
   doctorAccounts.push(doctor);
 
@@ -62,9 +64,11 @@ function toDoctorUser(doctor: (typeof doctorAccounts)[number]) {
     specialization: doctor.specialization,
     qualification: doctor.qualification,
     experienceYears: doctor.experienceYears,
+    age: doctor.age,
     phone: doctor.phone,
     clinicAddress: doctor.clinicAddress,
     bio: doctor.bio,
     profileImage: doctor.profileImage,
+    licenseDocument: doctor.licenseDocument,
   };
 }

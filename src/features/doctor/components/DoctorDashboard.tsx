@@ -29,9 +29,12 @@ export default function DoctorDashboard() {
   }, [doctor, refreshKey]);
 
   const upcomingAppointments = appointments.filter((appointment) => (appointment.status === "confirmed" || appointment.status === "upcoming") && new Date(appointment.dateTime ?? appointment.startsAt).getTime() >= now).sort((left, right) => (left.dateTime ?? left.startsAt).localeCompare(right.dateTime ?? right.startsAt));
+  const confirmed = appointments.filter((appointment) => appointment.status === "confirmed").length;
+  const upcoming = appointments.filter((appointment) => appointment.status === "upcoming").length;
   const completed = appointments.filter((appointment) => appointment.status === "completed").length;
   const pending = appointments.filter((appointment) => appointment.status === "pending").length;
   const cancelled = appointments.filter((appointment) => appointment.status === "cancelled").length;
+  const missed = appointments.filter((appointment) => appointment.status === "missed").length;
   async function cancelAppointment(appointment: Appointment): Promise<void> {
     if (!doctor) return;
     setActionError(null);
@@ -51,14 +54,17 @@ export default function DoctorDashboard() {
         </header>
 
         <section className="mt-7 grid gap-3 sm:grid-cols-2 lg:grid-cols-4" aria-label="Appointment summary">
-          <SummaryCard label="Total booked" value={appointments.length} icon={<CalendarCheck className="size-5" aria-hidden="true" />} tone="bg-sky-50 text-sky-600" />
-          <SummaryCard label="Completed" value={completed} icon={<CheckCircle2 className="size-5" aria-hidden="true" />} tone="bg-emerald-50 text-emerald-600" />
+          <SummaryCard label="Total" value={appointments.length} icon={<CalendarCheck className="size-5" aria-hidden="true" />} tone="bg-sky-50 text-sky-600" />
           <SummaryCard label="Pending" value={pending} icon={<Clock3 className="size-5" aria-hidden="true" />} tone="bg-amber-50 text-amber-600" />
+          <SummaryCard label="Confirmed" value={confirmed} icon={<CheckCircle2 className="size-5" aria-hidden="true" />} tone="bg-emerald-50 text-emerald-600" />
+          <SummaryCard label="Upcoming" value={upcoming} icon={<CalendarDays className="size-5" aria-hidden="true" />} tone="bg-sky-50 text-sky-600" />
+          <SummaryCard label="Completed" value={completed} icon={<CheckCircle2 className="size-5" aria-hidden="true" />} tone="bg-emerald-50 text-emerald-600" />
           <SummaryCard label="Cancelled" value={cancelled} icon={<ShieldAlert className="size-5" aria-hidden="true" />} tone="bg-rose-50 text-rose-600" />
+          <SummaryCard label="Missed" value={missed} icon={<ShieldAlert className="size-5" aria-hidden="true" />} tone="bg-rose-50 text-rose-600" />
         </section>
 
         <section className="mt-7 grid gap-4 sm:grid-cols-2" aria-label="Quick actions">
-          <QuickAction href="/doctor/profile" icon={<UserRound className="size-5" aria-hidden="true" />} title="My Profile" description="Update your professional details and availability." />
+          <QuickAction href="/doctor/profile" icon={<UserRound className="size-5" aria-hidden="true" />} title="My Profile" description="Update your professional details." />
           <QuickAction href="/doctor/appointments" icon={<ClipboardList className="size-5" aria-hidden="true" />} title="View All Appointments" description="Review every patient appointment in one place." />
         </section>
 

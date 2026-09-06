@@ -8,7 +8,7 @@ function accountToDoctor(account: (typeof doctorAccounts)[number]) {
     specialty: account.specialization,
     city: account.clinicAddress.split(",").pop()?.trim() || "Clinic location",
     photo: account.profileImage || "https://images.unsplash.com/photo-1559839734-2b71ea197ec2?auto=format&fit=crop&w=500&q=80",
-    age: 0,
+    age: account.age,
     rating: 0,
     fee: 500,
     experience: account.experienceYears,

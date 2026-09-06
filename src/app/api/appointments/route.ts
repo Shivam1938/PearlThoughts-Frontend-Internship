@@ -34,6 +34,10 @@ type CreateAppointmentRequest = {
   notes?: string;
 };
 const appointmentActions: AppointmentAction[] = ["confirm", "decline", "cancel", "complete", "miss", "reschedule"];
+function formatNotificationTime(dateTime: string): string {
+  const date = new Date(dateTime);
+  return `${date.toLocaleDateString("en-IN", { month: "short", day: "numeric" })}, ${date.toLocaleTimeString("en-IN", { hour: "numeric", minute: "2-digit", hour12: true })}`;
+}
 
 const notificationsByAction: Record<AppointmentAction, { kind: NotificationKind; message: string }> = {
   confirm: { kind: "booking_confirmed", message: "Your appointment has been confirmed." },
@@ -108,12 +112,18 @@ export async function PATCH(request: Request) {
     else {
       if (appointment.status !== "confirmed" && appointment.status !== "upcoming") return invalidTransition("Only confirmed or upcoming appointments can be rescheduled.");
       if (!body.startsAt || Number.isNaN(new Date(body.startsAt).getTime())) return Response.json({ message: "A valid new appointment time is required." }, { status: 400 });
+      // Bug 9: a doctor can drag an appointment onto ANY day/time on the calendar, not just
+      // onto a time that happens to already exist as a published availabilitySlot entry --
+      // most days have no pre-published slots at all, so requiring a matching slot made
+      // rescheduling impossible almost everywhere. Only the slot bookkeeping (used to show
+      // "open"/"unavailable" on the calendar) is optional; the real gate is that the new time
+      // isn't already taken by another active appointment.
       const targetSlot = availabilitySlots.find((slot) => slot.doctorId === appointment.doctorId && slot.start === body.startsAt);
       const conflictingAppointment = appointments.some((item) => item.id !== appointment.id && item.doctorId === appointment.doctorId && item.status !== "cancelled" && (item.dateTime ?? item.startsAt) === body.startsAt);
-      if (!targetSlot || targetSlot.isBooked || conflictingAppointment) return invalidTransition("The selected time is unavailable or already booked.");
+      if ((targetSlot && targetSlot.isBooked) || conflictingAppointment) return invalidTransition("The selected time is unavailable or already booked.");
       const previousSlot = availabilitySlots.find((slot) => slot.doctorId === appointment.doctorId && slot.start === startsAt);
       if (previousSlot) previousSlot.isBooked = false;
-      targetSlot.isBooked = true;
+      if (targetSlot) targetSlot.isBooked = true;
       appointment.startsAt = body.startsAt;
       appointment.dateTime = body.startsAt;
     }
@@ -128,6 +138,21 @@ export async function PATCH(request: Request) {
     if (slot) slot.isBooked = false;
   }
   const notification = notificationsByAction[body.action];
-  appointmentNotifications.unshift({ id: `notification-${Date.now()}`, appointmentId: appointment.id, recipientId: appointment.patientId ?? "", kind: notification.kind, message: notification.message, createdAt: new Date().toISOString(), read: false });
+  const notifiedAt = new Date().toISOString();
+  appointmentNotifications.unshift({ id: `notification-${Date.now()}`, appointmentId: appointment.id, recipientId: appointment.patientId ?? "", kind: notification.kind, message: notification.message, createdAt: notifiedAt, read: false });
+
+  // Patients are only permitted to take the "cancel" action (see the validation above).
+  // That's a doctor-relevant event, so the doctor needs their own notification too --
+  // the write above only ever reaches the patient.
+  const isPatientInitiated = !body.doctorId;
+  if (isPatientInitiated && appointment.doctorId) {
+    appointmentNotifications.unshift({ id: `notification-${Date.now()}-doctor`, appointmentId: appointment.id, recipientId: appointment.doctorId, kind: notification.kind, message: `${appointment.patient.name} cancelled their appointment.`, createdAt: notifiedAt, read: false });
+  }
+  // Bug 9: a reschedule (drag-and-drop or otherwise) changes something both sides care
+  // about, so the doctor needs a confirmation notification alongside the patient's --
+  // the write above only ever reaches the patient for this action.
+  if (body.action === "reschedule" && appointment.doctorId) {
+    appointmentNotifications.unshift({ id: `notification-${Date.now()}-doctor`, appointmentId: appointment.id, recipientId: appointment.doctorId, kind: notification.kind, message: `${appointment.patient.name}'s appointment was rescheduled to ${formatNotificationTime(appointment.dateTime ?? appointment.startsAt)}.`, createdAt: notifiedAt, read: false });
+  }
   return Response.json({ data: appointment });
 }

@@ -34,9 +34,11 @@ function toDoctorUser(doctor: (typeof doctorAccounts)[number]) {
     specialization: doctor.specialization,
     qualification: doctor.qualification,
     experienceYears: doctor.experienceYears,
+    age: doctor.age,
     phone: doctor.phone,
     clinicAddress: doctor.clinicAddress,
     bio: doctor.bio,
     profileImage: doctor.profileImage,
+    licenseDocument: doctor.licenseDocument,
   };
 }

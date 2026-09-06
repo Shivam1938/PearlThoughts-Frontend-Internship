@@ -141,8 +141,8 @@ export default function Home() {
   const [currentTime] = useState(() => Date.now());
   const upcomingAppointment = items.find((item) => item.status !== "cancelled" && new Date(item.startsAt).getTime() >= currentTime);
   const totalBooked = items.length;
+  const totalForSelectedDate = tabCounts.upcoming + tabCounts.completed + tabCounts.cancelled + tabCounts.missed;
   const completed = tabCounts.completed;
-  const cancelled = items.filter((item) => item.status === "cancelled").length;
 
   function confirmDelete(): void {
     if (!deleteCandidate?.booking) return;
@@ -223,12 +223,13 @@ export default function Home() {
             <button type="button" onClick={() => window.location.assign("/doctors")} className="mt-5 w-full rounded-lg bg-sky-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-sky-700">Explore All Specialties</button>
           </div>
         </section>
-        <section className="grid gap-3 py-5 sm:grid-cols-2 lg:grid-cols-4" aria-label="Appointment summary">
+        <section className="grid gap-3 py-5 sm:grid-cols-2 lg:grid-cols-5" aria-label="Appointment summary">
           {[
-            { label: "Total booked", value: totalBooked, icon: CalendarCheck, tone: "bg-sky-50 text-sky-600" },
+            { label: "Total", value: totalForSelectedDate, icon: CalendarCheck, tone: "bg-sky-50 text-sky-600" },
+            { label: "Upcoming", value: tabCounts.upcoming, icon: Clock3, tone: "bg-amber-50 text-amber-600" },
             { label: "Completed", value: completed, icon: CheckCircle2, tone: "bg-emerald-50 text-emerald-600" },
-            { label: "Pending", value: items.filter((item) => item.status === "pending").length, icon: Clock3, tone: "bg-amber-50 text-amber-600" },
-            { label: "Cancelled", value: cancelled, icon: ShieldAlert, tone: "bg-rose-50 text-rose-600" },
+            { label: "Cancelled", value: tabCounts.cancelled, icon: ShieldAlert, tone: "bg-rose-50 text-rose-600" },
+            { label: "Missed", value: tabCounts.missed, icon: ShieldAlert, tone: "bg-rose-50 text-rose-600" },
           ].map(({ label, value, icon: Icon, tone }) => <div key={label} className="flex items-center justify-between rounded-xl border border-[var(--line)] bg-white p-4 shadow-sm"><div><p className="text-xs font-medium text-[var(--muted)]">{label}</p><p className="mt-1 text-2xl font-semibold text-[var(--ink)]">{value}</p></div><span className={`grid size-10 place-items-center rounded-lg ${tone}`}><Icon className="size-5" aria-hidden="true" /></span></div>)}
         </section>
         <section className="py-8" aria-labelledby="dashboard-title">
