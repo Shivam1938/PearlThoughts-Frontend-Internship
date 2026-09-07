@@ -1,7 +1,14 @@
-﻿import type { Appointment } from "@/types/appointment";
+import type { Appointment } from "@/types/appointment";
+
+function appointment(id: string, patientId: string, patientName: string, dateTime: string, type: string, status: Appointment["status"], notes?: string, prescriptionUrl?: string): Appointment {
+  return { id, patientId, doctorId: "doctor-1", patient: { name: patientName, initials: patientName.split(" ").map((part) => part[0]).join(""), age: 0 }, clinician: "Dr. Priya Mehta", specialty: "General Medicine", startsAt: dateTime, durationMinutes: 30, status, reason: type, note: notes, dateTime, type, notes, prescriptionUrl };
+}
+
 export const appointments: Appointment[] = [
-  { id: "apt-1042", patient: { name: "Maya Patel", initials: "MP", age: 34 }, clinician: "Dr. Anika Rao", specialty: "General medicine", startsAt: "2026-08-28T09:00:00", durationMinutes: 30, status: "confirmed", reason: "Follow-up consultation", room: "Room 04" },
-  { id: "apt-1043", patient: { name: "Ethan Brooks", initials: "EB", age: 41 }, clinician: "Dr. Anika Rao", specialty: "General medicine", startsAt: "2026-08-28T10:00:00", durationMinutes: 45, status: "pending", reason: "Annual wellness visit", room: "Room 04" },
-  { id: "apt-1044", patient: { name: "Sofia Chen", initials: "SC", age: 28 }, clinician: "Dr. Martin Cole", specialty: "Dermatology", startsAt: "2026-08-28T11:15:00", durationMinutes: 30, status: "confirmed", reason: "Skin consultation", room: "Room 12" },
-  { id: "apt-1045", patient: { name: "Noah Williams", initials: "NW", age: 52 }, clinician: "Dr. Anika Rao", specialty: "General medicine", startsAt: "2026-08-28T14:00:00", durationMinutes: 30, status: "cancelled", reason: "Blood pressure review", room: "Room 04" },
+  appointment("apt-pending", "user-001", "Alex Morgan", "2026-09-10T09:00:00.000Z", "Consultation", "pending", "First visit"),
+  appointment("apt-confirmed", "user-001", "Alex Morgan", "2026-09-10T10:00:00.000Z", "Follow-up", "confirmed"),
+  appointment("apt-upcoming", "user-001", "Alex Morgan", "2026-09-11T11:00:00.000Z", "Consultation", "upcoming", "Discuss test results"),
+  appointment("apt-completed", "user-001", "Alex Morgan", "2026-08-30T09:30:00.000Z", "Consultation", "completed", undefined, "/prescriptions/rx-apt-completed"),
+  appointment("apt-cancelled", "user-002", "Sam Taylor", "2026-09-03T10:00:00.000Z", "Consultation", "cancelled"),
+  appointment("apt-missed", "user-002", "Sam Taylor", "2026-08-28T15:00:00.000Z", "Follow-up", "missed"),
 ];
