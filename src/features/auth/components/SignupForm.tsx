@@ -28,8 +28,7 @@ export default function SignupForm() {
   if (user) return <p className="text-sm text-[var(--brand)]" role="status">Account created. Redirecting...</p>;
 
   return (
-    <form className="auth-form-card w-full max-w-md rounded-xl border border-[var(--line)] bg-white p-5 shadow-sm sm:p-6" onSubmit={handleSubmit} noValidate>
-      <div>
+<form className="w-full max-w-md rounded-xl border border-[var(--line)] bg-white p-6 shadow-sm" onSubmit={handleSubmit} noValidate>      <div>
         <p className="text-sm font-medium uppercase tracking-[0.18em] text-[var(--brand)]">PulseCare</p>
         <h1 className="mt-3 text-3xl font-semibold tracking-tight">Create your account</h1>
         <p className="mt-2 text-[var(--muted)]">Book and manage your doctor appointments.</p>

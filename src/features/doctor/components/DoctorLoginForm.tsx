@@ -22,9 +22,7 @@ export default function DoctorLoginForm() {
   }
 
   return (
-    <form className="auth-form-card w-full max-w-md rounded-xl border border-[var(--line)] bg-white p-6 shadow-sm" onSubmit={handleSubmit} noValidate>
-      <p className="text-sm font-medium uppercase tracking-[0.18em] text-[var(--brand)]">Doctor portal</p>
-      <h1 className="mt-3 text-3xl font-semibold tracking-tight">Log in to your practice</h1>
+<form className="w-full max-w-md rounded-xl border border-[var(--line)] bg-white p-6 shadow-sm" onSubmit={handleSubmit} noValidate>      <h1 className="mt-3 text-3xl font-semibold tracking-tight">Log in to your practice</h1>
       <p className="mt-2 text-[var(--muted)]">Manage your appointments and availability.</p>
       <div className="mt-6 space-y-4">
         <LoginField id="doctor-email" label="Email" type="email" value={email} error={errors.email} onChange={setEmail} />
