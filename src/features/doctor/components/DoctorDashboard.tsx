@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { CalendarCheck, CalendarDays, CheckCircle2, ChevronRight, ClipboardList, Clock3, ShieldAlert, Trash2, UserRound } from "lucide-react";
+import { CalendarCheck, CalendarDays, CheckCircle2, ChevronRight, ClipboardList, Clock3, FileText, ShieldAlert, Trash2, UserRound } from "lucide-react";
 import { useEffect, useState } from "react";
 import type { Appointment, AppointmentStatus } from "@/types/appointment";
 import { updateDoctorAppointment } from "@/features/doctor/api/updateAppointment";
@@ -66,6 +66,7 @@ export default function DoctorDashboard() {
         <section className="mt-7 grid gap-4 sm:grid-cols-2" aria-label="Quick actions">
           <QuickAction href="/doctor/profile" icon={<UserRound className="size-5" aria-hidden="true" />} title="My Profile" description="Update your professional details." />
           <QuickAction href="/doctor/appointments" icon={<ClipboardList className="size-5" aria-hidden="true" />} title="View All Appointments" description="Review every patient appointment in one place." />
+          <QuickAction href="/doctor/prescriptions" icon={<FileText className="size-5" aria-hidden="true" />} title="Manage Prescriptions" description="Write and edit prescriptions for completed appointments." />
         </section>
 
         <section className="mt-7 overflow-hidden rounded-xl border border-[var(--line)] bg-white shadow-sm" aria-labelledby="upcoming-title">
