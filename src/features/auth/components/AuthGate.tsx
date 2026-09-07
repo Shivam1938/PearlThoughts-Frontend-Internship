@@ -1,0 +1,40 @@
+"use client";
+
+import { usePathname } from "next/navigation";
+import type { ReactNode } from "react";
+import AuthenticatedShell from "@/components/layout/AuthenticatedShell";
+import AuthShell from "@/features/auth/components/AuthShell";
+import LoginForm from "@/features/auth/components/LoginForm";
+import { useAuth } from "@/features/auth/hooks/auth-context";
+import DoctorLoginForm from "@/features/doctor/components/DoctorLoginForm";
+import DoctorPortalShell from "@/features/doctor/components/DoctorPortalShell";
+import { useDoctorAuth } from "@/features/doctor/hooks/doctor-auth-context";
+
+export default function AuthGate({ children }: { children: ReactNode }) {
+  const pathname = usePathname();
+  const { isReady, user } = useAuth();
+  const { isReady: isDoctorReady, doctor } = useDoctorAuth();
+
+  if (!isReady || !isDoctorReady) return null;
+
+  // `/doctors` is a patient route; only the singular `/doctor` segment is protected here.
+  const isDoctorRoute = pathname === "/doctor" || pathname.startsWith("/doctor/");
+  const isPublicDoctorRoute = pathname === "/doctor/login" || pathname === "/doctor/register";
+  if (isDoctorRoute) {
+    if (isPublicDoctorRoute) return children;
+    if (!doctor) return <AuthShell><DoctorLoginForm /></AuthShell>;
+    return <DoctorPortalShell>{children}</DoctorPortalShell>;
+  }
+
+  const isPublicAuthRoute = pathname === "/login" || pathname === "/signup";
+
+  if (!isPublicAuthRoute && !user) {
+    return <AuthShell><LoginForm /></AuthShell>;
+  }
+
+  if (pathname !== "/login" && user) {
+    return <AuthenticatedShell>{children}</AuthenticatedShell>;
+  }
+
+  return children;
+}

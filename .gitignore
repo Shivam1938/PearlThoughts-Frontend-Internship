@@ -30,6 +30,10 @@ yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
 
+# internal agent references
+codex.md
+PROGRESS.md
+
 # env files (can opt-in for committing if needed)
 .env*
 
@@ -39,3 +43,5 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+Agent.md
+AgentFix.md
